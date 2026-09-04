@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LeetCode Preparation</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>LeetCode Preparation</h1>
+      <nav class="tabs" aria-label="Main sections">
+        <button class="tab-btn active" data-tab="problemsTab">Problems Library</button>
+        <button class="tab-btn" data-tab="kanbanTab">Spaced Repetition (Kanban)</button>
+        <button class="tab-btn" data-tab="analyticsTab">Analytics</button>
+      </nav>
+    </header>
+
+    <main class="tab-panels">
+      <section id="problemsTab" class="tab-panel active">
+        <div class="library-header">
+          <h2>Problems Library</h2>
+          <button id="openAddProblem" class="icon-btn" aria-label="Add problem">+</button>
+        </div>
+        <div class="filters">
+          <input id="search" type="search" placeholder="Search title, description, tags, category" />
+          <select id="difficultyFilter">
+            <option value="">All difficulties</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <input id="categoryFilter" type="text" placeholder="Category filter" />
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th><th>Difficulty</th><th>Category</th><th>Tags</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="problemRows"></tbody>
+        </table>
+      </section>
+
+      <section id="kanbanTab" class="tab-panel">
+        <h2>Spaced Repetition (Kanban)</h2>
+        <div id="kanban" class="kanban"></div>
+      </section>
+
+      <section id="analyticsTab" class="tab-panel">
+        <h2>Analytics</h2>
+        <p id="insights"></p>
+        <div id="boxStatus"></div>
+        <h3>Review Heatmap (12 weeks)</h3>
+        <div id="heatmap" class="heatmap"></div>
+        <h3>Difficulty Distribution</h3>
+        <ul id="difficulty"></ul>
+        <h3>Category Distribution (Top 10)</h3>
+        <ul id="category"></ul>
+        <h3>Streak</h3>
+        <p id="streak"></p>
+      </section>
+    </main>
+
+    <div id="problemModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="addProblemTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="addProblemTitle">Add Problem</h3>
+          <button id="closeAddProblem" class="close-btn" aria-label="Close popup">×</button>
+        </div>
+        <form id="problemForm">
+          <input name="title" placeholder="Title" required />
+          <input name="link" placeholder="LeetCode link" />
+          <input name="github_link" placeholder="GitHub link" />
+          <input name="category" placeholder="Category" />
+          <input name="tags" placeholder="Tags (comma-separated)" />
+          <select name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <textarea name="description" placeholder="Notes / Description"></textarea>
+          <button type="submit">Save Problem</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -17,17 +17,17 @@ function switchTab(tabId) {
   for (const button of tabButtons) {
     button.classList.toggle('active', button.dataset.tab === tabId);
   }
-
-  function openModal() {
-    problemModal.classList.remove('hidden');
-  }
-
-  function closeModal() {
-    problemModal.classList.add('hidden');
-  }
   for (const panel of tabPanels) {
     panel.classList.toggle('active', panel.id === tabId);
   }
+}
+
+function openModal() {
+  problemModal.classList.remove('hidden');
+}
+
+function closeModal() {
+  problemModal.classList.add('hidden');
 }
 
 async function request(path, options = {}) {

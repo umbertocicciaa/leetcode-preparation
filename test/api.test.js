@@ -98,3 +98,10 @@ test('UI defines separate tab panels for library, kanban, and analytics', () => 
   assert.match(html, /id="problemModal" class="modal hidden"/);
   assert.match(html, /id="closeAddProblem"/);
 });
+
+test('popup handlers are defined at top-level in frontend script', () => {
+  const js = fs.readFileSync(path.join(process.cwd(), 'public', 'app.js'), 'utf8');
+  assert.match(js, /function switchTab\([^)]*\) \{[\s\S]*?\}\n\nfunction openModal\(\)/);
+  assert.match(js, /\nfunction openModal\(\) \{\n  problemModal\.classList\.remove\('hidden'\);\n\}/);
+  assert.match(js, /\nfunction closeModal\(\) \{\n  problemModal\.classList\.add\('hidden'\);\n\}/);
+});

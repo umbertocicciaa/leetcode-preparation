@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LeetCode Preparation</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>LeetCode Preparation</h1>
+      <input id="search" type="search" placeholder="Search title, description, tags, category" />
+      <select id="difficultyFilter">
+        <option value="">All difficulties</option>
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+      <input id="categoryFilter" type="text" placeholder="Category filter" />
+    </header>
+
+    <main>
+      <section>
+        <h2>Add Problem</h2>
+        <form id="problemForm">
+          <input name="title" placeholder="Title" required />
+          <input name="link" placeholder="LeetCode link" />
+          <input name="github_link" placeholder="GitHub link" />
+          <input name="category" placeholder="Category" />
+          <input name="tags" placeholder="Tags (comma-separated)" />
+          <select name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <textarea name="description" placeholder="Notes / Description"></textarea>
+          <button type="submit">Save Problem</button>
+        </form>
+      </section>
+
+      <section>
+        <h2>Problems Library</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th><th>Difficulty</th><th>Category</th><th>Tags</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="problemRows"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Spaced Repetition (Kanban)</h2>
+        <div id="kanban" class="kanban"></div>
+      </section>
+
+      <section>
+        <h2>Analytics</h2>
+        <p id="insights"></p>
+        <div id="boxStatus"></div>
+        <h3>Review Heatmap (12 weeks)</h3>
+        <div id="heatmap" class="heatmap"></div>
+        <h3>Difficulty Distribution</h3>
+        <ul id="difficulty"></ul>
+        <h3>Category Distribution (Top 10)</h3>
+        <ul id="category"></ul>
+        <h3>Streak</h3>
+        <p id="streak"></p>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

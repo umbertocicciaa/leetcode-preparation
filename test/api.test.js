@@ -36,6 +36,7 @@ test('CRUD + search + box movement + analytics', async () => {
         title: 'Two Sum',
         description: 'hash map approach',
         link: 'https://leetcode.com/problems/two-sum/',
+        github_link: 'https://github.com/example/leetcode-two-sum',
         difficulty: 'easy',
         category: 'Arrays',
         tags: ['array', 'hash-map'],
@@ -48,6 +49,15 @@ test('CRUD + search + box movement + analytics', async () => {
     const listRes = await request(ctx.app).get('/api/problems?q=hash').expect(200);
     assert.equal(listRes.body.length, 1);
     assert.equal(listRes.body[0].title, 'Two Sum');
+
+    const searchByLink = await request(ctx.app).get('/api/problems?q=leetcode.com/problems/two-sum').expect(200);
+    assert.equal(searchByLink.body.length, 1);
+
+    const searchByDifficulty = await request(ctx.app).get('/api/problems?q=easy').expect(200);
+    assert.equal(searchByDifficulty.body.length, 1);
+
+    const searchByGithubLink = await request(ctx.app).get('/api/problems?q=github.com/example').expect(200);
+    assert.equal(searchByGithubLink.body.length, 1);
 
     const moveRes = await request(ctx.app)
       .patch(`/api/problems/${createRes.body.id}/box`)
@@ -84,4 +94,7 @@ test('UI defines separate tab panels for library, kanban, and analytics', () => 
   assert.match(html, /<section id="problemsTab" class="tab-panel active">/);
   assert.match(html, /<section id="kanbanTab" class="tab-panel">/);
   assert.match(html, /<section id="analyticsTab" class="tab-panel">/);
+  assert.match(html, /id="openAddProblem"/);
+  assert.match(html, /id="problemModal" class="modal hidden"/);
+  assert.match(html, /id="closeAddProblem"/);
 });

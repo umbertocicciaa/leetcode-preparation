@@ -3,6 +3,10 @@ const kanban = document.getElementById('kanban');
 const searchInput = document.getElementById('search');
 const difficultyFilter = document.getElementById('difficultyFilter');
 const categoryFilter = document.getElementById('categoryFilter');
+const problemForm = document.getElementById('problemForm');
+const problemModal = document.getElementById('problemModal');
+const openAddProblemBtn = document.getElementById('openAddProblem');
+const closeAddProblemBtn = document.getElementById('closeAddProblem');
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
@@ -12,6 +16,14 @@ let draggingProblemId = null;
 function switchTab(tabId) {
   for (const button of tabButtons) {
     button.classList.toggle('active', button.dataset.tab === tabId);
+  }
+
+  function openModal() {
+    problemModal.classList.remove('hidden');
+  }
+
+  function closeModal() {
+    problemModal.classList.add('hidden');
   }
   for (const panel of tabPanels) {
     panel.classList.toggle('active', panel.id === tabId);
@@ -151,7 +163,7 @@ async function loadProblems() {
   await renderKanban();
 }
 
-document.getElementById('problemForm').addEventListener('submit', async (event) => {
+problemForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const formData = new FormData(event.target);
   const payload = Object.fromEntries(formData.entries());
@@ -161,6 +173,7 @@ document.getElementById('problemForm').addEventListener('submit', async (event) 
     body: JSON.stringify(payload),
   });
   event.target.reset();
+  closeModal();
   await loadProblems();
   await renderAnalytics();
 });
@@ -206,3 +219,9 @@ loadProblems()
 for (const button of tabButtons) {
   button.addEventListener('click', () => switchTab(button.dataset.tab));
 }
+
+openAddProblemBtn.addEventListener('click', openModal);
+closeAddProblemBtn.addEventListener('click', closeModal);
+problemModal.addEventListener('click', (event) => {
+  if (event.target === problemModal) closeModal();
+});

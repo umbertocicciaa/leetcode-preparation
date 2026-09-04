@@ -18,7 +18,10 @@
 
     <main class="tab-panels">
       <section id="problemsTab" class="tab-panel active">
-        <h2>Problems Library</h2>
+        <div class="library-header">
+          <h2>Problems Library</h2>
+          <button id="openAddProblem" class="icon-btn" aria-label="Add problem">+</button>
+        </div>
         <div class="filters">
           <input id="search" type="search" placeholder="Search title, description, tags, category" />
           <select id="difficultyFilter">
@@ -29,22 +32,6 @@
           </select>
           <input id="categoryFilter" type="text" placeholder="Category filter" />
         </div>
-
-        <h3>Add Problem</h3>
-        <form id="problemForm">
-          <input name="title" placeholder="Title" required />
-          <input name="link" placeholder="LeetCode link" />
-          <input name="github_link" placeholder="GitHub link" />
-          <input name="category" placeholder="Category" />
-          <input name="tags" placeholder="Tags (comma-separated)" />
-          <select name="difficulty">
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-          </select>
-          <textarea name="description" placeholder="Notes / Description"></textarea>
-          <button type="submit">Save Problem</button>
-        </form>
 
         <table>
           <thead>
@@ -75,6 +62,29 @@
         <p id="streak"></p>
       </section>
     </main>
+
+    <div id="problemModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="addProblemTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="addProblemTitle">Add Problem</h3>
+          <button id="closeAddProblem" class="close-btn" aria-label="Close popup">×</button>
+        </div>
+        <form id="problemForm">
+          <input name="title" placeholder="Title" required />
+          <input name="link" placeholder="LeetCode link" />
+          <input name="github_link" placeholder="GitHub link" />
+          <input name="category" placeholder="Category" />
+          <input name="tags" placeholder="Tags (comma-separated)" />
+          <select name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <textarea name="description" placeholder="Notes / Description"></textarea>
+          <button type="submit">Save Problem</button>
+        </form>
+      </div>
+    </div>
 
     <script src="/app.js"></script>
   </body>

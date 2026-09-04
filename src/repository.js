@@ -63,6 +63,9 @@ async function listProblems(db, query) {
       builder
         .whereILike('p.title', `%${q}%`)
         .orWhereILike('p.description', `%${q}%`)
+        .orWhereILike('p.link', `%${q}%`)
+        .orWhereILike('p.github_link', `%${q}%`)
+        .orWhereILike('p.difficulty', `%${q}%`)
         .orWhereILike('p.category', `%${q}%`)
         .orWhereILike('t.tag_name', `%${q}%`);
     });

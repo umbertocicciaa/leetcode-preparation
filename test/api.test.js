@@ -75,3 +75,13 @@ test('CRUD + search + box movement + analytics', async () => {
     await ctx.close();
   }
 });
+
+test('UI defines separate tab panels for library, kanban, and analytics', () => {
+  const html = fs.readFileSync(path.join(process.cwd(), 'public', 'index.html'), 'utf8');
+  assert.match(html, /data-tab="problemsTab"/);
+  assert.match(html, /data-tab="kanbanTab"/);
+  assert.match(html, /data-tab="analyticsTab"/);
+  assert.match(html, /<section id="problemsTab" class="tab-panel active">/);
+  assert.match(html, /<section id="kanbanTab" class="tab-panel">/);
+  assert.match(html, /<section id="analyticsTab" class="tab-panel">/);
+});

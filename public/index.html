@@ -7,21 +7,30 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header>
+    <header class="app-header">
       <h1>LeetCode Preparation</h1>
-      <input id="search" type="search" placeholder="Search title, description, tags, category" />
-      <select id="difficultyFilter">
-        <option value="">All difficulties</option>
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
-      </select>
-      <input id="categoryFilter" type="text" placeholder="Category filter" />
+      <nav class="tabs" aria-label="Main sections">
+        <button class="tab-btn active" data-tab="problemsTab">Problems Library</button>
+        <button class="tab-btn" data-tab="kanbanTab">Spaced Repetition (Kanban)</button>
+        <button class="tab-btn" data-tab="analyticsTab">Analytics</button>
+      </nav>
     </header>
 
-    <main>
-      <section>
-        <h2>Add Problem</h2>
+    <main class="tab-panels">
+      <section id="problemsTab" class="tab-panel active">
+        <h2>Problems Library</h2>
+        <div class="filters">
+          <input id="search" type="search" placeholder="Search title, description, tags, category" />
+          <select id="difficultyFilter">
+            <option value="">All difficulties</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <input id="categoryFilter" type="text" placeholder="Category filter" />
+        </div>
+
+        <h3>Add Problem</h3>
         <form id="problemForm">
           <input name="title" placeholder="Title" required />
           <input name="link" placeholder="LeetCode link" />
@@ -36,10 +45,7 @@
           <textarea name="description" placeholder="Notes / Description"></textarea>
           <button type="submit">Save Problem</button>
         </form>
-      </section>
 
-      <section>
-        <h2>Problems Library</h2>
         <table>
           <thead>
             <tr>
@@ -50,12 +56,12 @@
         </table>
       </section>
 
-      <section>
+      <section id="kanbanTab" class="tab-panel">
         <h2>Spaced Repetition (Kanban)</h2>
         <div id="kanban" class="kanban"></div>
       </section>
 
-      <section>
+      <section id="analyticsTab" class="tab-panel">
         <h2>Analytics</h2>
         <p id="insights"></p>
         <div id="boxStatus"></div>

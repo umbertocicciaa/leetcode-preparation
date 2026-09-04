@@ -3,9 +3,20 @@ const kanban = document.getElementById('kanban');
 const searchInput = document.getElementById('search');
 const difficultyFilter = document.getElementById('difficultyFilter');
 const categoryFilter = document.getElementById('categoryFilter');
+const tabButtons = [...document.querySelectorAll('.tab-btn')];
+const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
 let problems = [];
 let draggingProblemId = null;
+
+function switchTab(tabId) {
+  for (const button of tabButtons) {
+    button.classList.toggle('active', button.dataset.tab === tabId);
+  }
+  for (const panel of tabPanels) {
+    panel.classList.toggle('active', panel.id === tabId);
+  }
+}
 
 async function request(path, options = {}) {
   const res = await fetch(path, {
@@ -191,3 +202,7 @@ for (const input of [searchInput, difficultyFilter, categoryFilter]) {
 loadProblems()
   .then(renderAnalytics)
   .catch((err) => alert(err.message));
+
+for (const button of tabButtons) {
+  button.addEventListener('click', () => switchTab(button.dataset.tab));
+}

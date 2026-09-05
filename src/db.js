@@ -72,6 +72,16 @@ async function initSchema(db) {
       table.text('box_name').notNullable();
     });
   }
+
+  const hasStudyEvents = await db.schema.hasTable('study_events');
+  if (!hasStudyEvents) {
+    await db.schema.createTable('study_events', (table) => {
+      table.increments('id').primary();
+      table.integer('problem_id').notNullable().references('id').inTable('problems').onDelete('CASCADE').index();
+      table.timestamp('studied_at').notNullable().defaultTo(db.fn.now()).index();
+      table.integer('user_id').index();
+    });
+  }
 }
 
 module.exports = {

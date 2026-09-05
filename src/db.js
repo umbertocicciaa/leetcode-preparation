@@ -45,6 +45,7 @@ async function initSchema(db) {
       table.text('link');
       table.text('github_link');
       table.enu('difficulty', ['easy', 'medium', 'hard']).notNullable().defaultTo('easy');
+      table.text('notes');
       table.text('category').index();
       table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
       table.timestamp('last_reviewed');

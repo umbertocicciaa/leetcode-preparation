@@ -3,6 +3,7 @@ const kanban = document.getElementById('kanban');
 const searchInput = document.getElementById('search');
 const difficultyFilter = document.getElementById('difficultyFilter');
 const categoryFilter = document.getElementById('categoryFilter');
+const tagsFilter = document.getElementById('tagsFilter');
 const problemForm = document.getElementById('problemForm');
 const problemModal = document.getElementById('problemModal');
 const openAddProblemBtn = document.getElementById('openAddProblem');
@@ -48,6 +49,7 @@ function filtersToQuery() {
   if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
   if (difficultyFilter.value) params.set('difficulty', difficultyFilter.value);
   if (categoryFilter.value.trim()) params.set('category', categoryFilter.value.trim());
+  if (tagsFilter.value.trim()) params.set('tags', tagsFilter.value.trim());
   return params.toString();
 }
 
@@ -211,7 +213,7 @@ problemRows.addEventListener('click', async (event) => {
   openModal();
 });
 
-for (const input of [searchInput, difficultyFilter, categoryFilter]) {
+for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter]) {
   input.addEventListener('input', () => {
     loadProblems().catch((err) => alert(err.message));
   });

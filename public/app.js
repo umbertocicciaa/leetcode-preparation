@@ -142,8 +142,49 @@ function renderAnalyticsHeatmap(data) {
     const level = point.count >= 8 ? 4 : point.count >= 4 ? 3 : point.count >= 2 ? 2 : point.count >= 1 ? 1 : 0;
     cell.className = `heatcell ${level ? `l${level}` : ''}`;
     cell.title = `${point.date}: ${point.count} review${point.count === 1 ? '' : 's'}`;
-    heatmap.appendChild(cell);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'heatcell-button';
+    button.setAttribute('aria-label', `Show ${point.count} review${point.count === 1 ? '' : 's'} from ${point.date}`);
+    button.appendChild(cell);
+    button.addEventListener('click', () => renderReviewDetails(point.date));
+    heatmap.appendChild(button);
   }
+}
+
+async function renderReviewDetails(date) {
+  const details = document.getElementById('reviewDetails');
+  details.replaceChildren();
+  const heading = document.createElement('h4');
+  heading.textContent = `Reviewed on ${date}`;
+  details.appendChild(heading);
+
+  const reviews = await request(`/api/analytics/reviews?date=${encodeURIComponent(date)}`);
+  if (!reviews.length) {
+    const empty = document.createElement('p');
+    empty.textContent = 'No reviews recorded for this day.';
+    details.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement('ul');
+  list.className = 'review-list';
+  for (const review of reviews) {
+    const item = document.createElement('li');
+    const title = document.createElement(review.link ? 'a' : 'span');
+    title.textContent = review.title || '(Untitled problem)';
+    if (review.link) {
+      title.href = review.link;
+      title.target = '_blank';
+      title.rel = 'noopener noreferrer';
+    }
+    const meta = document.createElement('span');
+    const time = new Date(review.studied_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    meta.textContent = `${review.difficulty} · ${review.category || 'Uncategorized'} · ${time}`;
+    item.append(title, meta);
+    list.appendChild(item);
+  }
+  details.appendChild(list);
 }
 
 function renderAnalyticsLists(data) {
@@ -157,10 +198,14 @@ function renderAnalyticsLists(data) {
 
   const boxStatus = document.getElementById('boxStatus');
   boxStatus.innerHTML = data.boxStatus
-    .map((item) => `Box ${item.box}: ${item.count} total (${item.readyToday} ready today)`)
-    .join(' | ');
+    .map((item) => `<span><strong>Box ${item.box}</strong>${item.count} total · ${item.readyToday} due</span>`)
+    .join('');
 
-  document.getElementById('streak').textContent = `Current streak: ${data.streak} days (longest: ${data.longestStreak})`;
+  document.getElementById('totalProblems').textContent = data.totalProblems;
+  document.getElementById('reviewsThisWeek').textContent = data.reviewsThisWeek;
+  document.getElementById('dueToday').textContent = data.dueToday;
+  document.getElementById('streak').textContent = `${data.streak} day${data.streak === 1 ? '' : 's'}`;
+  document.getElementById('longestStreak').textContent = `Longest streak: ${data.longestStreak} day${data.longestStreak === 1 ? '' : 's'} · ${data.totalReviews} reviews recorded`;
   document.getElementById('insights').textContent = data.insights;
 }
 
@@ -253,8 +298,15 @@ loadProblems()
   .catch((err) => alert(err.message));
 
 for (const button of tabButtons) {
-  button.addEventListener('click', () => switchTab(button.dataset.tab));
+  button.addEventListener('click', () => {
+    switchTab(button.dataset.tab);
+    if (button.dataset.tab === 'analyticsTab') renderAnalytics().catch((err) => alert(err.message));
+  });
 }
+
+document.getElementById('refreshAnalytics').addEventListener('click', () => {
+  renderAnalytics().catch((err) => alert(err.message));
+});
 
 openAddProblemBtn.addEventListener('click', () => {
   currentEditingId = null;

@@ -27,10 +27,36 @@ th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
 .tags { font-size: 0.8rem; color: #444; }
 .heatmap { display: grid; grid-template-columns: repeat(28, 12px); gap: 3px; }
 .heatcell { width: 12px; height: 12px; border-radius: 2px; background: #ebedf0; }
+.heatcell-button { padding: 0; border: 0; background: transparent; border-radius: 3px; line-height: 0; }
+.heatcell-button:hover .heatcell { outline: 2px solid #1d4ed8; outline-offset: 1px; }
+.heatcell-button:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
 .l1 { background: #9be9a8; }
 .l2 { background: #40c463; }
 .l3 { background: #30a14e; }
 .l4 { background: #216e39; }
+.analytics-header, .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.analytics-header h2, .analytics-section h3 { margin: 0; }
+.muted, .section-heading span { color: #64748b; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+.metric-card { background: linear-gradient(135deg, #eff6ff, #f5f3ff); border: 1px solid #dbeafe; border-radius: 10px; padding: 0.85rem; }
+.metric-card span { display: block; color: #475569; font-size: 0.85rem; }
+.metric-card strong { display: block; font-size: 1.55rem; margin-top: 0.2rem; color: #1e3a8a; }
+.analytics-section { border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem; }
+.analytics-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.stat-list { margin: 0.6rem 0 0; padding-left: 1.25rem; }
+.stat-list li { padding: 0.2rem 0; }
+.box-status { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+.box-status span { border: 1px solid #dbeafe; border-radius: 999px; padding: 0.35rem 0.55rem; background: #f8fbff; font-size: 0.86rem; }
+.box-status strong { margin-right: 0.25rem; }
+.legend { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: #64748b; margin: 0.65rem 0 0; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; background: #ebedf0; }
+.review-details { margin-top: 0.85rem; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; }
+.review-details h4 { margin: 0 0 0.45rem; }
+.review-details p { margin: 0; color: #64748b; }
+.review-list { margin: 0; padding-left: 1.2rem; }
+.review-list li { padding: 0.3rem 0; }
+.review-list span { display: block; color: #64748b; font-size: 0.85rem; }
+@media (max-width: 600px) { .analytics-columns { grid-template-columns: 1fr; } .notes-container, .description-container { grid-template-columns: 1fr; } }
 .hidden { display: none !important; }
 .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); display: grid; place-items: center; padding: 1rem; }
 .modal-content { width: min(520px, 100%); background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2); padding: 1rem; }

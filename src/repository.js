@@ -120,8 +120,15 @@ async function moveProblemBox(db, id, box) {
   const numericBox = Number(box);
   if (!Number.isInteger(numericBox) || numericBox < 1) return null;
 
-  await db('problems').where({ id }).update({ box: numericBox, last_reviewed: db.fn.now() });
-  return getProblemById(db, id);
+  return db.transaction(async (trx) => {
+    const updated = await trx('problems').where({ id }).update({ box: numericBox, last_reviewed: trx.fn.now() });
+    if (!updated) return null;
+
+    // A box move represents completing a review. Keep the individual event so
+    // activity charts and streaks do not lose older reviews of the same problem.
+    await trx('study_events').insert({ problem_id: id });
+    return getProblemById(trx, id);
+  });
 }
 
 async function listBoxes(db) {
@@ -158,25 +165,24 @@ async function analytics(db) {
     .slice(0, 10)
     .map(([name, count]) => ({ name, count }));
 
-  const startDate = new Date(now);
-  startDate.setDate(startDate.getDate() - 83);
-  startDate.setHours(0, 0, 0, 0);
+  const today = now.toISOString().slice(0, 10);
+  const startDate = new Date(`${today}T00:00:00.000Z`);
+  startDate.setUTCDate(startDate.getUTCDate() - 83);
 
-  const reviewed = await db('problems')
-    .whereNotNull('last_reviewed')
-    .andWhere('last_reviewed', '>=', startDate.toISOString())
-    .select('last_reviewed');
+  const reviewed = await db('study_events')
+    .where('studied_at', '>=', startDate)
+    .select('studied_at');
 
   const heatCount = new Map();
   for (const row of reviewed) {
-    const date = new Date(row.last_reviewed).toISOString().slice(0, 10);
+    const date = new Date(row.studied_at).toISOString().slice(0, 10);
     heatCount.set(date, (heatCount.get(date) || 0) + 1);
   }
 
   const heatmap = [];
   for (let i = 0; i < 84; i += 1) {
     const date = new Date(startDate);
-    date.setDate(startDate.getDate() + i);
+    date.setUTCDate(startDate.getUTCDate() + i);
     const key = date.toISOString().slice(0, 10);
     heatmap.push({ date: key, count: heatCount.get(key) || 0 });
   }
@@ -199,14 +205,12 @@ async function analytics(db) {
   }
 
   const lastDate = reviewedDays.length ? reviewedDays[reviewedDays.length - 1] : null;
-  const today = now.toISOString().slice(0, 10);
   const yesterday = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
   const streak = lastDate === today ? currentStreak : (lastDate === yesterday ? currentStreak : 0);
 
-  const thisWeekStart = new Date(now);
-  thisWeekStart.setDate(now.getDate() - now.getDay());
-  thisWeekStart.setHours(0, 0, 0, 0);
-  const reviewsThisWeek = reviewed.filter((row) => new Date(row.last_reviewed) >= thisWeekStart).length;
+  const thisWeekStart = new Date(`${today}T00:00:00.000Z`);
+  thisWeekStart.setUTCDate(thisWeekStart.getUTCDate() - thisWeekStart.getUTCDay());
+  const reviewsThisWeek = reviewed.filter((row) => new Date(row.studied_at) >= thisWeekStart).length;
 
   const boxStatus = Array.from({ length: 6 }, (_, idx) => {
     const box = idx + 1;
@@ -218,6 +222,7 @@ async function analytics(db) {
   });
 
   const dueToday = boxStatus.reduce((acc, item) => acc + item.readyToday, 0);
+  const totalReviews = await db('study_events').count({ count: '*' }).first();
 
   return {
     heatmap,
@@ -226,8 +231,30 @@ async function analytics(db) {
     boxStatus,
     streak,
     longestStreak,
+    totalReviews: Number(totalReviews?.count || 0),
+    reviewsThisWeek,
+    dueToday,
+    totalProblems: problems.length,
     insights: `${problems.length} total problems | ${reviewsThisWeek} reviews this week | ${dueToday} due today | Longest streak: ${longestStreak} days`,
   };
+}
+
+async function listReviewsByDay(db, date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const start = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(start.getTime()) || start.toISOString().slice(0, 10) !== date) return null;
+
+  const rows = await db('study_events as se')
+    .join('problems as p', 'p.id', 'se.problem_id')
+    .select('se.id as review_id', 'se.problem_id', 'se.studied_at', 'p.title', 'p.difficulty', 'p.category', 'p.link')
+    .orderBy('se.studied_at', 'desc');
+
+  // Match the heatmap's UTC date conversion exactly. This avoids a mismatch
+  // between SQLite text dates, PostgreSQL timestamps, and browser time zones.
+  const reviewsForDay = rows
+    .filter((row) => new Date(row.studied_at).toISOString().slice(0, 10) === date)
+    .map((row) => ({ ...row, id: row.problem_id }));
+  return withTags(db, reviewsForDay);
 }
 
 module.exports = {
@@ -239,4 +266,5 @@ module.exports = {
   moveProblemBox,
   listBoxes,
   analytics,
+  listReviewsByDay,
 };

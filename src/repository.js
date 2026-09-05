@@ -55,7 +55,7 @@ async function listProblems(db, query) {
   const q = (query.q || '').trim();
   const difficulty = query.difficulty ? query.difficulty.toLowerCase() : null;
   const category = (query.category || '').trim();
-  const tag = (query.tag || '').trim();
+  const tag = (query.tags || query.tag || '').trim();
 
   const base = db('problems as p').select('p.*').distinct();
 

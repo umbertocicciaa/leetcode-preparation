@@ -12,6 +12,7 @@ const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
 let problems = [];
 let draggingProblemId = null;
+let currentEditingId = null;
 
 function switchTab(tabId) {
   for (const button of tabButtons) {
@@ -168,11 +169,15 @@ problemForm.addEventListener('submit', async (event) => {
   const formData = new FormData(event.target);
   const payload = Object.fromEntries(formData.entries());
   payload.tags = (payload.tags || '').split(',').map((t) => t.trim()).filter(Boolean);
-  await request('/api/problems', {
-    method: 'POST',
+  const isEdit = currentEditingId !== null;
+  const method = isEdit ? 'PATCH' : 'POST';
+  const path = isEdit ? `/api/problems/${currentEditingId}` : '/api/problems';
+  await request(path, {
+    method,
     body: JSON.stringify(payload),
   });
   event.target.reset();
+  currentEditingId = null;
   closeModal();
   await loadProblems();
   await renderAnalytics();
@@ -193,17 +198,17 @@ problemRows.addEventListener('click', async (event) => {
   const current = problems.find((p) => p.id === id);
   if (!current) return;
 
-  const title = prompt('Title', current.title || '') ?? current.title;
-  const description = prompt('Description', current.description || '') ?? current.description;
-  const category = prompt('Category', current.category || '') ?? current.category;
-  const tags = prompt('Tags (comma separated)', (current.tags || []).join(',')) ?? (current.tags || []).join(',');
-
-  await request(`/api/problems/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ title, description, category, tags }),
-  });
-  await loadProblems();
-  await renderAnalytics();
+  currentEditingId = id;
+  document.getElementById('addProblemTitle').textContent = 'Edit Problem';
+  problemForm.querySelector('button[type="submit"]').textContent = 'Update Problem';
+  problemForm.elements.title.value = current.title || '';
+  problemForm.elements.link.value = current.link || '';
+  problemForm.elements.github_link.value = current.github_link || '';
+  problemForm.elements.category.value = current.category || '';
+  problemForm.elements.tags.value = (current.tags || []).join(', ');
+  problemForm.elements.difficulty.value = current.difficulty || 'easy';
+  problemForm.elements.description.value = current.description || '';
+  openModal();
 });
 
 for (const input of [searchInput, difficultyFilter, categoryFilter]) {
@@ -220,8 +225,19 @@ for (const button of tabButtons) {
   button.addEventListener('click', () => switchTab(button.dataset.tab));
 }
 
-openAddProblemBtn.addEventListener('click', openModal);
-closeAddProblemBtn.addEventListener('click', closeModal);
+openAddProblemBtn.addEventListener('click', () => {
+  currentEditingId = null;
+  document.getElementById('addProblemTitle').textContent = 'Add Problem';
+  problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
+  problemForm.reset();
+  openModal();
+});
+closeAddProblemBtn.addEventListener('click', () => {
+  currentEditingId = null;
+  document.getElementById('addProblemTitle').textContent = 'Add Problem';
+  problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
+  closeModal();
+});
 problemModal.addEventListener('click', (event) => {
   if (event.target === problemModal) closeModal();
 });

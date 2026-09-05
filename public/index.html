@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LeetCode Preparation</title>
     <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
     <header class="app-header">
@@ -81,9 +82,28 @@
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
           </select>
-          <textarea name="description" placeholder="Notes / Description"></textarea>
+          <div class="description-container">
+            <textarea name="description" placeholder="Notes / Description (markdown supported)"></textarea>
+            <div id="descriptionPreview" class="notes-preview"></div>
+          </div>
           <button type="submit">Save Problem</button>
         </form>
+      </div>
+    </div>
+
+    <div id="notesModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="noteTitle">Notes</h3>
+          <button id="closeNotes" class="close-btn" aria-label="Close popup">×</button>
+        </div>
+        <div class="notes-container">
+          <textarea id="notesInput" placeholder="Write your notes here (markdown supported)"></textarea>
+          <div id="notesPreview" class="notes-preview"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveNotes" type="button">Save Notes</button>
+        </div>
       </div>
     </div>
 

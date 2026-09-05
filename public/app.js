@@ -8,12 +8,22 @@ const problemForm = document.getElementById('problemForm');
 const problemModal = document.getElementById('problemModal');
 const openAddProblemBtn = document.getElementById('openAddProblem');
 const closeAddProblemBtn = document.getElementById('closeAddProblem');
+const notesModal = document.getElementById('notesModal');
+const notesInput = document.getElementById('notesInput');
+const notesPreview = document.getElementById('notesPreview');
+const closeNotesBtn = document.getElementById('closeNotes');
+const saveNotesBtn = document.getElementById('saveNotes');
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
 let problems = [];
 let draggingProblemId = null;
 let currentEditingId = null;
+let currentNotesId = null;
+
+function renderMarkdown(text) {
+  return marked.parse(text || '');
+}
 
 function switchTab(tabId) {
   for (const button of tabButtons) {
@@ -64,6 +74,7 @@ function renderProblems() {
       <td>${problem.category || ''}</td>
       <td>${tags}</td>
       <td>
+        <button data-notes="${problem.id}">Notes</button>
         <button data-edit="${problem.id}">Edit</button>
         <button data-delete="${problem.id}">Delete</button>
       </td>
@@ -185,15 +196,32 @@ problemForm.addEventListener('submit', async (event) => {
   await renderAnalytics();
 });
 
+problemForm.elements.description.addEventListener('input', () => {
+  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(problemForm.elements.description.value);
+});
+
 problemRows.addEventListener('click', async (event) => {
   const target = event.target;
-  const id = Number(target.getAttribute('data-delete') || target.getAttribute('data-edit'));
+  const notesId = Number(target.getAttribute('data-notes'));
+  const deleteId = Number(target.getAttribute('data-delete'));
+  const editId = Number(target.getAttribute('data-edit'));
+  const id = notesId || deleteId || editId;
   if (!id) return;
 
   if (target.hasAttribute('data-delete')) {
     await request(`/api/problems/${id}`, { method: 'DELETE' });
     await loadProblems();
     await renderAnalytics();
+    return;
+  }
+
+  if (target.hasAttribute('data-notes')) {
+    currentNotesId = id;
+    const current = problems.find((p) => p.id === id);
+    document.getElementById('noteTitle').textContent = `Notes: ${current.title || 'Problem'}`;
+    notesInput.value = current.notes || '';
+    notesPreview.innerHTML = renderMarkdown(current.notes);
+    notesModal.classList.remove('hidden');
     return;
   }
 
@@ -210,6 +238,7 @@ problemRows.addEventListener('click', async (event) => {
   problemForm.elements.tags.value = (current.tags || []).join(', ');
   problemForm.elements.difficulty.value = current.difficulty || 'easy';
   problemForm.elements.description.value = current.description || '';
+  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(current.description);
   openModal();
 });
 
@@ -232,6 +261,7 @@ openAddProblemBtn.addEventListener('click', () => {
   document.getElementById('addProblemTitle').textContent = 'Add Problem';
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
   problemForm.reset();
+  document.getElementById('descriptionPreview').innerHTML = '';
   openModal();
 });
 closeAddProblemBtn.addEventListener('click', () => {
@@ -242,4 +272,31 @@ closeAddProblemBtn.addEventListener('click', () => {
 });
 problemModal.addEventListener('click', (event) => {
   if (event.target === problemModal) closeModal();
+});
+
+notesInput.addEventListener('input', () => {
+  notesPreview.innerHTML = renderMarkdown(notesInput.value);
+});
+
+saveNotesBtn.addEventListener('click', async () => {
+  if (!currentNotesId) return;
+  await request(`/api/problems/${currentNotesId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ notes: notesInput.value }),
+  });
+  currentNotesId = null;
+  notesModal.classList.add('hidden');
+  await loadProblems();
+});
+
+closeNotesBtn.addEventListener('click', () => {
+  currentNotesId = null;
+  notesModal.classList.add('hidden');
+});
+
+notesModal.addEventListener('click', (event) => {
+  if (event.target === notesModal) {
+    currentNotesId = null;
+    notesModal.classList.add('hidden');
+  }
 });

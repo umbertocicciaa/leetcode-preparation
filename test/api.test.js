@@ -66,6 +66,7 @@ test('CRUD + search + box movement + analytics', async () => {
 
     assert.equal(moveRes.body.box, 2);
     assert.ok(moveRes.body.last_reviewed);
+    assert.equal(await ctx.db('study_events').where({ problem_id: createRes.body.id }).count({ count: '*' }).then(([row]) => Number(row.count)), 1);
 
     const boxesRes = await request(ctx.app).get('/api/boxes').expect(200);
     const boxTwo = boxesRes.body.find((b) => b.box === 2);
@@ -76,6 +77,8 @@ test('CRUD + search + box movement + analytics', async () => {
     assert.equal(analyticsRes.body.difficulty.easy, 1);
     assert.ok(Array.isArray(analyticsRes.body.heatmap));
     assert.equal(analyticsRes.body.heatmap.length, 84);
+    assert.equal(analyticsRes.body.totalReviews, 1);
+    assert.equal(analyticsRes.body.reviewsThisWeek, 1);
     assert.match(analyticsRes.body.insights, /total problems/);
 
     await request(ctx.app).delete(`/api/problems/${createRes.body.id}`).expect(204);

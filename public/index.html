@@ -51,17 +51,30 @@
       </section>
 
       <section id="analyticsTab" class="tab-panel">
-        <h2>Analytics</h2>
-        <p id="insights"></p>
-        <div id="boxStatus"></div>
-        <h3>Review Heatmap (12 weeks)</h3>
-        <div id="heatmap" class="heatmap"></div>
-        <h3>Difficulty Distribution</h3>
-        <ul id="difficulty"></ul>
-        <h3>Category Distribution (Top 10)</h3>
-        <ul id="category"></ul>
-        <h3>Streak</h3>
-        <p id="streak"></p>
+        <div class="analytics-header">
+          <div>
+            <h2>Analytics</h2>
+            <p id="insights" class="muted"></p>
+          </div>
+          <button id="refreshAnalytics" type="button">Refresh</button>
+        </div>
+        <div class="metric-grid" aria-label="Study overview">
+          <article class="metric-card"><span>Problems</span><strong id="totalProblems">0</strong></article>
+          <article class="metric-card"><span>Reviews this week</span><strong id="reviewsThisWeek">0</strong></article>
+          <article class="metric-card"><span>Due today</span><strong id="dueToday">0</strong></article>
+          <article class="metric-card"><span>Current streak</span><strong id="streak">0 days</strong></article>
+        </div>
+        <section class="analytics-section">
+          <div class="section-heading"><h3>Review activity</h3><span>Last 12 weeks</span></div>
+          <div id="heatmap" class="heatmap" aria-label="Review activity heatmap"></div>
+          <p class="legend"><i></i> Less <i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</p>
+          <div id="reviewDetails" class="review-details" aria-live="polite"><p>Select a day to see its reviewed problems.</p></div>
+        </section>
+        <div class="analytics-columns">
+          <section class="analytics-section"><h3>Difficulty distribution</h3><ul id="difficulty" class="stat-list"></ul></section>
+          <section class="analytics-section"><h3>Top categories</h3><ul id="category" class="stat-list"></ul></section>
+        </div>
+        <section class="analytics-section"><h3>Box status</h3><div id="boxStatus" class="box-status"></div><p id="longestStreak" class="muted"></p></section>
       </section>
     </main>
 

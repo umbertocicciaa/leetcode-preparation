@@ -9,6 +9,7 @@ const {
   moveProblemBox,
   listBoxes,
   analytics,
+  listReviewsByDay,
 } = require('./repository');
 
 function createApp(db) {
@@ -86,6 +87,16 @@ function createApp(db) {
     try {
       const data = await analytics(db);
       res.json(data);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/analytics/reviews', async (req, res, next) => {
+    try {
+      const reviews = await listReviewsByDay(db, String(req.query.date || ''));
+      if (!reviews) return res.status(400).json({ error: 'date must be a valid YYYY-MM-DD value' });
+      res.json(reviews);
     } catch (error) {
       next(error);
     }

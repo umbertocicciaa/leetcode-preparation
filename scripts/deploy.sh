@@ -65,8 +65,6 @@ rsync -a \
     --exclude "releases" \
     --exclude "current" \
     --exclude "scripts" \
-    --exclude "test" \
-    --exclude "README.md" \
     "$PROJECT_ROOT/" \
     "$NEW_RELEASE/"
 

@@ -276,8 +276,7 @@ problemRows.addEventListener('click', async (event) => {
   if (target.hasAttribute('data-notes')) {
     currentNotesId = id;
     const current = problems.find((p) => p.id === id);
-    const companies = (current.company_tags || []).join(', ');
-    document.getElementById('noteTitle').textContent = `Notes: ${current.title || 'Problem'}${companies ? ` · ${companies}` : ''}`;
+    document.getElementById('noteTitle').textContent = `Notes: ${current.title || 'Problem'}`;
     notesInput.value = current.notes || '';
     notesPreview.innerHTML = renderMarkdown(current.notes);
     setNotesPreviewExpanded(false);

@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const knex = require('knex');
 
@@ -22,7 +23,10 @@ function createDb() {
     });
   }
 
-  const sqlitePath = process.env.SQLITE_PATH || path.join(process.cwd(), 'data', 'leetcode-prep.db');
+  // Releases run from different working directories. Keep SQLite outside the
+  // release tree so deployments and restarts always open the same database.
+  const sqlitePath = process.env.SQLITE_PATH
+    || path.join(os.homedir(), 'releases', 'dbs', 'leetcode-preparation', 'leetcode-prep.db');
   fs.mkdirSync(path.dirname(sqlitePath), { recursive: true });
 
   return knex({

@@ -13,14 +13,26 @@ function normalizeTags(tags) {
 async function withTags(db, rows) {
   if (rows.length === 0) return [];
   const ids = rows.map((row) => row.id);
-  const tags = await db('tags').select('problem_id', 'tag_name').whereIn('problem_id', ids);
+  const [tags, companyTags] = await Promise.all([
+    db('tags').select('problem_id', 'tag_name').whereIn('problem_id', ids),
+    db('company_tags').select('problem_id', 'company_name').whereIn('problem_id', ids),
+  ]);
   const byProblem = tags.reduce((acc, tag) => {
     if (!acc[tag.problem_id]) acc[tag.problem_id] = [];
     acc[tag.problem_id].push(tag.tag_name);
     return acc;
   }, {});
+  const companiesByProblem = companyTags.reduce((acc, tag) => {
+    if (!acc[tag.problem_id]) acc[tag.problem_id] = [];
+    acc[tag.problem_id].push(tag.company_name);
+    return acc;
+  }, {});
 
-  return rows.map((row) => ({ ...row, tags: byProblem[row.id] || [] }));
+  return rows.map((row) => ({
+    ...row,
+    tags: byProblem[row.id] || [],
+    company_tags: companiesByProblem[row.id] || [],
+  }));
 }
 
 async function createProblem(db, payload) {
@@ -41,6 +53,10 @@ async function createProblem(db, payload) {
   if (tags.length) {
     await db('tags').insert(tags.map((tag) => ({ problem_id: id, tag_name: tag })));
   }
+  const companyTags = normalizeTags(payload.company_tags);
+  if (companyTags.length) {
+    await db('company_tags').insert(companyTags.map((companyName) => ({ problem_id: id, company_name: companyName })));
+  }
 
   return getProblemById(db, id);
 }
@@ -56,11 +72,12 @@ async function listProblems(db, query) {
   const difficulty = query.difficulty ? query.difficulty.toLowerCase() : null;
   const category = (query.category || '').trim();
   const tag = (query.tags || query.tag || '').trim();
+  const companyTag = (query.company_tags || query.company_tag || '').trim();
 
   const base = db('problems as p').select('p.*').distinct();
 
   if (q) {
-    base.leftJoin('tags as t', 't.problem_id', 'p.id').where((builder) => {
+    base.leftJoin('tags as t', 't.problem_id', 'p.id').leftJoin('company_tags as ct', 'ct.problem_id', 'p.id').where((builder) => {
       builder
         .whereILike('p.title', `%${q}%`)
         .orWhereILike('p.description', `%${q}%`)
@@ -68,7 +85,8 @@ async function listProblems(db, query) {
         .orWhereILike('p.github_link', `%${q}%`)
         .orWhereILike('p.difficulty', `%${q}%`)
         .orWhereILike('p.category', `%${q}%`)
-        .orWhereILike('t.tag_name', `%${q}%`);
+        .orWhereILike('t.tag_name', `%${q}%`)
+        .orWhereILike('ct.company_name', `%${q}%`);
     });
   }
 
@@ -77,6 +95,9 @@ async function listProblems(db, query) {
 
   if (tag) {
     base.join('tags as t2', 't2.problem_id', 'p.id').andWhereILike('t2.tag_name', `%${tag}%`);
+  }
+  if (companyTag) {
+    base.join('company_tags as ct2', 'ct2.problem_id', 'p.id').andWhereILike('ct2.company_name', `%${companyTag}%`);
   }
 
   const rows = await base.orderBy('p.created_at', 'desc');
@@ -105,6 +126,14 @@ async function updateProblem(db, id, payload) {
     const tags = normalizeTags(payload.tags);
     if (tags.length) {
       await db('tags').insert(tags.map((tagName) => ({ problem_id: id, tag_name: tagName })));
+    }
+  }
+
+  if (payload.company_tags !== undefined) {
+    await db('company_tags').where({ problem_id: id }).del();
+    const companyTags = normalizeTags(payload.company_tags);
+    if (companyTags.length) {
+      await db('company_tags').insert(companyTags.map((companyName) => ({ problem_id: id, company_name: companyName })));
     }
   }
 

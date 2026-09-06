@@ -4,6 +4,7 @@ const searchInput = document.getElementById('search');
 const difficultyFilter = document.getElementById('difficultyFilter');
 const categoryFilter = document.getElementById('categoryFilter');
 const tagsFilter = document.getElementById('tagsFilter');
+const companyTagsFilter = document.getElementById('companyTagsFilter');
 const problemForm = document.getElementById('problemForm');
 const problemModal = document.getElementById('problemModal');
 const openAddProblemBtn = document.getElementById('openAddProblem');
@@ -67,6 +68,7 @@ function filtersToQuery() {
   if (difficultyFilter.value) params.set('difficulty', difficultyFilter.value);
   if (categoryFilter.value.trim()) params.set('category', categoryFilter.value.trim());
   if (tagsFilter.value.trim()) params.set('tags', tagsFilter.value.trim());
+  if (companyTagsFilter.value.trim()) params.set('company_tags', companyTagsFilter.value.trim());
   return params.toString();
 }
 
@@ -75,11 +77,13 @@ function renderProblems() {
   for (const problem of problems) {
     const tr = document.createElement('tr');
     const tags = (problem.tags || []).join(', ');
+    const companyTags = (problem.company_tags || []).join(', ');
     tr.innerHTML = `
       <td>${problem.title || ''}</td>
       <td>${problem.difficulty}</td>
       <td>${problem.category || ''}</td>
       <td>${tags}</td>
+      <td>${companyTags}</td>
       <td>
         <button data-notes="${problem.id}">Notes</button>
         <button data-edit="${problem.id}">Edit</button>
@@ -187,7 +191,8 @@ async function renderReviewDetails(date) {
     }
     const meta = document.createElement('span');
     const time = new Date(review.studied_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    meta.textContent = `${review.difficulty} · ${review.category || 'Uncategorized'} · ${time}`;
+    const companies = (review.company_tags || []).join(', ');
+    meta.textContent = `${review.difficulty} · ${review.category || 'Uncategorized'}${companies ? ` · ${companies}` : ''} · ${time}`;
     item.append(title, meta);
     list.appendChild(item);
   }
@@ -234,6 +239,7 @@ problemForm.addEventListener('submit', async (event) => {
   const formData = new FormData(event.target);
   const payload = Object.fromEntries(formData.entries());
   payload.tags = (payload.tags || '').split(',').map((t) => t.trim()).filter(Boolean);
+  payload.company_tags = (payload.company_tags || '').split(',').map((t) => t.trim()).filter(Boolean);
   const isEdit = currentEditingId !== null;
   const method = isEdit ? 'PATCH' : 'POST';
   const path = isEdit ? `/api/problems/${currentEditingId}` : '/api/problems';
@@ -270,7 +276,8 @@ problemRows.addEventListener('click', async (event) => {
   if (target.hasAttribute('data-notes')) {
     currentNotesId = id;
     const current = problems.find((p) => p.id === id);
-    document.getElementById('noteTitle').textContent = `Notes: ${current.title || 'Problem'}`;
+    const companies = (current.company_tags || []).join(', ');
+    document.getElementById('noteTitle').textContent = `Notes: ${current.title || 'Problem'}${companies ? ` · ${companies}` : ''}`;
     notesInput.value = current.notes || '';
     notesPreview.innerHTML = renderMarkdown(current.notes);
     setNotesPreviewExpanded(false);
@@ -289,13 +296,14 @@ problemRows.addEventListener('click', async (event) => {
   problemForm.elements.github_link.value = current.github_link || '';
   problemForm.elements.category.value = current.category || '';
   problemForm.elements.tags.value = (current.tags || []).join(', ');
+  problemForm.elements.company_tags.value = (current.company_tags || []).join(', ');
   problemForm.elements.difficulty.value = current.difficulty || 'easy';
   problemForm.elements.description.value = current.description || '';
   document.getElementById('descriptionPreview').innerHTML = renderMarkdown(current.description);
   openModal();
 });
 
-for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter]) {
+for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter, companyTagsFilter]) {
   input.addEventListener('input', () => {
     loadProblems().catch((err) => alert(err.message));
   });

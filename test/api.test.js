@@ -40,11 +40,13 @@ test('CRUD + search + box movement + analytics', async () => {
         difficulty: 'easy',
         category: 'Arrays',
         tags: ['array', 'hash-map'],
+        company_tags: ['Meta', 'Google'],
       })
       .expect(201);
 
     assert.equal(createRes.body.title, 'Two Sum');
     assert.deepEqual(createRes.body.tags, ['array', 'hash-map']);
+    assert.deepEqual(createRes.body.company_tags, ['Meta', 'Google']);
 
     const listRes = await request(ctx.app).get('/api/problems?q=hash').expect(200);
     assert.equal(listRes.body.length, 1);
@@ -58,6 +60,9 @@ test('CRUD + search + box movement + analytics', async () => {
 
     const searchByGithubLink = await request(ctx.app).get('/api/problems?q=github.com/example').expect(200);
     assert.equal(searchByGithubLink.body.length, 1);
+
+    const searchByCompany = await request(ctx.app).get('/api/problems?company_tags=Meta').expect(200);
+    assert.equal(searchByCompany.body.length, 1);
 
     const moveRes = await request(ctx.app)
       .patch(`/api/problems/${createRes.body.id}/box`)

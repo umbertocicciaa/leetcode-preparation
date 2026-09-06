@@ -63,6 +63,17 @@ async function initSchema(db) {
     });
   }
 
+  // Additive migration: this creates a separate many-to-many-style tag table
+  // and leaves every existing problem row untouched.
+  const hasCompanyTags = await db.schema.hasTable('company_tags');
+  if (!hasCompanyTags) {
+    await db.schema.createTable('company_tags', (table) => {
+      table.increments('id').primary();
+      table.integer('problem_id').notNullable().references('id').inTable('problems').onDelete('CASCADE');
+      table.text('company_name').notNullable().index();
+    });
+  }
+
   const hasCustomBoxes = await db.schema.hasTable('custom_boxes');
   if (!hasCustomBoxes) {
     await db.schema.createTable('custom_boxes', (table) => {

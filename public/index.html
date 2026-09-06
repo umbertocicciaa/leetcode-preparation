@@ -33,12 +33,13 @@
           </select>
           <input id="categoryFilter" type="text" placeholder="Category filter" />
           <input id="tagsFilter" type="text" placeholder="Tags filter (comma-separated)" />
+          <input id="companyTagsFilter" type="text" placeholder="Company tags filter" />
         </div>
 
         <table>
           <thead>
             <tr>
-              <th>Title</th><th>Difficulty</th><th>Category</th><th>Tags</th><th>Actions</th>
+              <th>Title</th><th>Difficulty</th><th>Category</th><th>Tags</th><th>Company tags</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="problemRows"></tbody>
@@ -90,6 +91,7 @@
           <input name="github_link" placeholder="GitHub link" />
           <input name="category" placeholder="Category" />
           <input name="tags" placeholder="Tags (comma-separated)" />
+          <input name="company_tags" placeholder="Company tags (comma-separated)" />
           <select name="difficulty">
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>

@@ -62,10 +62,19 @@ th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
 .modal-content { width: min(520px, 100%); background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2); padding: 1rem; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .modal-header h3 { margin: 0; }
+.modal-actions { display: flex; align-items: center; gap: 0.5rem; }
+.secondary-btn { background: #e5e7eb; color: #1e3a8a; }
 .close-btn { background: #e5e7eb; color: #111827; width: 2rem; height: 2rem; padding: 0; border-radius: 999px; }
 .notes-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
 #notesInput { resize: vertical; min-height: 200px; }
-.notes-preview { border: 1px solid #d0d7e4; border-radius: 8px; padding: 0.6rem; background: #fafbfc; overflow-y: auto; max-height: 200px; font-size: 0.9rem; line-height: 1.5; }
+.notes-preview { border: 1px solid #d0d7e4; border-radius: 8px; padding: 0.6rem; background: #fafbfc; overflow: auto; max-height: 200px; font-size: 0.9rem; line-height: 1.5; }
+.notes-preview pre { max-width: 100%; overflow: auto; }
+.notes-preview img { max-width: 100%; height: auto; }
+#notesModal.preview-expanded { padding: 0; }
+#notesModal.preview-expanded .modal-content { width: 100vw; height: 100vh; max-width: none; border: 0; border-radius: 0; display: flex; flex-direction: column; }
+#notesModal.preview-expanded .notes-container { display: block; flex: 1; min-height: 0; margin: 0; }
+#notesModal.preview-expanded #notesInput, #notesModal.preview-expanded .modal-footer { display: none; }
+#notesModal.preview-expanded .notes-preview { height: 100%; max-height: none; box-sizing: border-box; }
 .description-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .description-container textarea { min-height: 160px; }
 #descriptionPreview { border: 1px solid #d0d7e4; border-radius: 8px; padding: 0.6rem; background: #fafbfc; overflow-y: auto; max-height: 160px; font-size: 0.9rem; line-height: 1.5; }

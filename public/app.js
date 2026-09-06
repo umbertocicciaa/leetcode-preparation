@@ -13,6 +13,7 @@ const notesInput = document.getElementById('notesInput');
 const notesPreview = document.getElementById('notesPreview');
 const closeNotesBtn = document.getElementById('closeNotes');
 const saveNotesBtn = document.getElementById('saveNotes');
+const toggleNotesPreviewBtn = document.getElementById('toggleNotesPreview');
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
@@ -40,6 +41,12 @@ function openModal() {
 
 function closeModal() {
   problemModal.classList.add('hidden');
+}
+
+function setNotesPreviewExpanded(expanded) {
+  notesModal.classList.toggle('preview-expanded', expanded);
+  toggleNotesPreviewBtn.setAttribute('aria-pressed', String(expanded));
+  toggleNotesPreviewBtn.textContent = expanded ? 'Exit full screen' : 'Read full screen';
 }
 
 async function request(path, options = {}) {
@@ -266,6 +273,7 @@ problemRows.addEventListener('click', async (event) => {
     document.getElementById('noteTitle').textContent = `Notes: ${current.title || 'Problem'}`;
     notesInput.value = current.notes || '';
     notesPreview.innerHTML = renderMarkdown(current.notes);
+    setNotesPreviewExpanded(false);
     notesModal.classList.remove('hidden');
     return;
   }
@@ -343,12 +351,24 @@ saveNotesBtn.addEventListener('click', async () => {
 
 closeNotesBtn.addEventListener('click', () => {
   currentNotesId = null;
+  setNotesPreviewExpanded(false);
   notesModal.classList.add('hidden');
+});
+
+toggleNotesPreviewBtn.addEventListener('click', () => {
+  setNotesPreviewExpanded(!notesModal.classList.contains('preview-expanded'));
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && notesModal.classList.contains('preview-expanded')) {
+    setNotesPreviewExpanded(false);
+  }
 });
 
 notesModal.addEventListener('click', (event) => {
   if (event.target === notesModal) {
     currentNotesId = null;
+    setNotesPreviewExpanded(false);
     notesModal.classList.add('hidden');
   }
 });

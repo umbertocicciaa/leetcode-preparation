@@ -19,6 +19,9 @@ CURRENT_LINK="$DEPLOY_ROOT/current"
 VERSION=$(date +"%Y%m%d-%H%M%S")
 NEW_RELEASE="$RELEASES_DIR/$VERSION"
 
+PLIST="$HOME/Library/LaunchAgents/${SERVICE_LABEL}.plist"
+GUI_DOMAIN="gui/$(id -u)"
+
 LOG_FILE="/tmp/${APP_NAME}-deploy.log"
 
 ###############################################################################
@@ -54,7 +57,6 @@ log "Project root: $PROJECT_ROOT"
 mkdir -p "$RELEASES_DIR"
 
 log "Creating release: $VERSION"
-
 mkdir -p "$NEW_RELEASE"
 
 log "Copying project..."
@@ -74,9 +76,35 @@ log "Updating current symlink"
 
 ln -sfn "$NEW_RELEASE" "$CURRENT_LINK"
 
+###############################################################################
+# Restart launchd service
+###############################################################################
+
 log "Restarting launchd service"
 
-launchctl kickstart -k "gui/$(id -u)/$SERVICE_LABEL"
+if [[ ! -f "$PLIST" ]]; then
+    error "LaunchAgent plist not found: $PLIST"
+    exit 1
+fi
+
+if launchctl print "$GUI_DOMAIN/$SERVICE_LABEL" >/dev/null 2>&1; then
+    log "Service already loaded"
+
+    launchctl bootout "$GUI_DOMAIN/$SERVICE_LABEL" || true
+    launchctl bootstrap "$GUI_DOMAIN" "$PLIST"
+else
+    log "Service not loaded; bootstrapping"
+
+    launchctl bootstrap "$GUI_DOMAIN" "$PLIST"
+fi
+
+launchctl kickstart -k "$GUI_DOMAIN/$SERVICE_LABEL"
+
+success "Launch agent started"
+
+###############################################################################
+# Done
+###############################################################################
 
 success "Deployment completed"
 

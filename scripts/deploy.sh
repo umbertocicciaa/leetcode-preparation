@@ -62,6 +62,7 @@ mkdir -p "$NEW_RELEASE"
 log "Copying project..."
 
 rsync -a \
+    --delete \
     --exclude ".git" \
     --exclude ".DS_Store" \
     --exclude "releases" \
@@ -80,27 +81,29 @@ ln -sfn "$NEW_RELEASE" "$CURRENT_LINK"
 # Restart launchd service
 ###############################################################################
 
-log "Restarting launchd service"
+log "Starting / restarting launchd service"
 
 if [[ ! -f "$PLIST" ]]; then
-    error "LaunchAgent plist not found: $PLIST"
+    error "LaunchAgent plist not found:"
+    error "  $PLIST"
     exit 1
 fi
 
-if launchctl print "$GUI_DOMAIN/$SERVICE_LABEL" >/dev/null 2>&1; then
+# Is the job already loaded?
+if launchctl list | awk '{print $3}' | grep -Fxq "$SERVICE_LABEL"; then
     log "Service already loaded"
 
-    launchctl bootout "$GUI_DOMAIN/$SERVICE_LABEL" || true
-    launchctl bootstrap "$GUI_DOMAIN" "$PLIST"
+    launchctl kickstart -kp "$GUI_DOMAIN/$SERVICE_LABEL"
+
 else
-    log "Service not loaded; bootstrapping"
+    log "Service not loaded"
 
     launchctl bootstrap "$GUI_DOMAIN" "$PLIST"
+
+    launchctl kickstart -kp "$GUI_DOMAIN/$SERVICE_LABEL"
 fi
 
-launchctl kickstart -k "$GUI_DOMAIN/$SERVICE_LABEL"
-
-success "Launch agent started"
+success "Launch agent running"
 
 ###############################################################################
 # Done

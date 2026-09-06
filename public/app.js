@@ -267,6 +267,11 @@ problemRows.addEventListener('click', async (event) => {
   if (!id) return;
 
   if (target.hasAttribute('data-delete')) {
+    const current = problems.find((p) => p.id === id);
+    const problemTitle = current?.title || 'this problem';
+    const confirmed = window.confirm(`Are you sure you want to delete "${problemTitle}"? This action cannot be undone.`);
+    if (!confirmed) return;
+
     await request(`/api/problems/${id}`, { method: 'DELETE' });
     await loadProblems();
     await renderAnalytics();

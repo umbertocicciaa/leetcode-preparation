@@ -48,6 +48,49 @@
 
       <section id="kanbanTab" class="tab-panel">
         <h2>Spaced Repetition (Kanban)</h2>
+        <details
+          class="spaced-repetition-info"
+          style="margin: 1rem 0; border: 1px solid #ddd; border-radius: 8px; background: #fafafa;">
+          <summary
+            style="cursor: pointer; padding: 0.8rem 1rem; font-weight: 600; user-select: none;"
+          >
+            📚 How the Leitner Method Works (click to expand)
+          </summary>
+
+          <div style="padding: 1rem; line-height: 1.6;">
+            <p>
+              The <strong>Leitner method</strong> is a spaced repetition system that
+              organizes flashcards into boxes based on how well you remember them.
+              Every time you answer a card correctly, it moves to the next box, meaning
+              it will be reviewed less frequently. If you answer incorrectly, the card
+              returns to <strong>Box 1</strong>, where it is reviewed more often.
+            </p>
+
+            <p>
+              This approach helps you spend more time on concepts you find difficult
+              while gradually increasing the interval between reviews for concepts you
+              already know well.
+            </p>
+
+            <h3 style="margin-top: 1.25rem;">Review Schedule</h3>
+
+            <ul style="padding-left: 1.5rem;">
+              <li><strong>Box 1:</strong> Review every day, a few hours after finishing a study session.</li>
+              <li><strong>Box 2:</strong> Review every day before starting to study.</li>
+              <li><strong>Box 3a:</strong> Review every Wednesday, after Box 2.</li>
+              <li><strong>Box 3b:</strong> Review every Saturday, after Box 2.</li>
+              <li><strong>Box 4:</strong> Review every Sunday.</li>
+              <li><strong>Box 5:</strong> Review at the end of each month or during the week before an exam.</li>
+            </ul>
+
+            <p style="margin-top: 1rem;">
+              <strong>Rule:</strong> Correct answers move a card to the next box, while
+              incorrect answers return it to <strong>Box 1</strong>. Cards in
+              <strong>Box 2</strong> move to <strong>Box 3b</strong> from Monday to
+              Thursday and to <strong>Box 3a</strong> from Friday to Sunday.
+            </p>
+          </div>
+        </details>
         <div id="kanban" class="kanban"></div>
       </section>
 

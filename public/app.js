@@ -79,12 +79,13 @@ function renderProblems() {
     const tags = (problem.tags || []).join(', ');
     const companyTags = (problem.company_tags || []).join(', ');
     const openProblemAction = problem.link
-      ? `<a href="${problem.link}" target="_blank" rel="noopener noreferrer" class="action-btn">Open Problem</a>`
-      : '';
+      ? `<button type="button" data-open="${problem.id}">Open Problem</button>`
+      : "";
+
     tr.innerHTML = `
-      <td>${problem.title || ''}</td>
+      <td>${problem.title || ""}</td>
       <td>${problem.difficulty}</td>
-      <td>${problem.category || ''}</td>
+      <td>${problem.category || ""}</td>
       <td>${tags}</td>
       <td>${companyTags}</td>
       <td>
@@ -267,8 +268,17 @@ problemRows.addEventListener('click', async (event) => {
   const notesId = Number(target.getAttribute('data-notes'));
   const deleteId = Number(target.getAttribute('data-delete'));
   const editId = Number(target.getAttribute('data-edit'));
-  const id = notesId || deleteId || editId;
+  const openId = Number(target.getAttribute("data-open"));
+  const id = notesId || deleteId || editId || openId;
   if (!id) return;
+
+  if (target.hasAttribute('data-open')) {
+    const problem = problems.find((p) => p.id === openId);
+    if (problem?.link) {
+      window.open(problem.link, "_blank", "noopener,noreferrer");
+    }
+    return;
+  }
 
   if (target.hasAttribute('data-delete')) {
     const current = problems.find((p) => p.id === id);

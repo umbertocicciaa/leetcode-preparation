@@ -78,6 +78,9 @@ function renderProblems() {
     const tr = document.createElement('tr');
     const tags = (problem.tags || []).join(', ');
     const companyTags = (problem.company_tags || []).join(', ');
+    const openProblemAction = problem.link
+      ? `<a href="${problem.link}" target="_blank" rel="noopener noreferrer" class="action-btn">Open Problem</a>`
+      : '';
     tr.innerHTML = `
       <td>${problem.title || ''}</td>
       <td>${problem.difficulty}</td>
@@ -85,6 +88,7 @@ function renderProblems() {
       <td>${tags}</td>
       <td>${companyTags}</td>
       <td>
+        ${openProblemAction}
         <button data-notes="${problem.id}">Notes</button>
         <button data-edit="${problem.id}">Edit</button>
         <button data-delete="${problem.id}">Delete</button>
@@ -269,7 +273,7 @@ problemRows.addEventListener('click', async (event) => {
   if (target.hasAttribute('data-delete')) {
     const current = problems.find((p) => p.id === id);
     const problemTitle = current?.title || 'this problem';
-    const confirmed = window.confirm(`Are you sure you want to delete "${problemTitle}"? This action cannot be undone.`);
+    const confirmed = window.confirm(`Are you sure you want to delete \"${problemTitle}\"? This action cannot be undone.`);
     if (!confirmed) return;
 
     await request(`/api/problems/${id}`, { method: 'DELETE' });

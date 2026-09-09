@@ -114,6 +114,35 @@ async function initSchema(db) {
       user_id: problem.user_id,
     })));
   }
+
+  // Clean up duplicate tags: keep only unique (problem_id, tag_name) pairs
+  // Delete duplicates, keeping the first occurrence
+  await db.raw(`
+    DELETE FROM tags WHERE rowid NOT IN (
+      SELECT MIN(rowid) FROM tags GROUP BY problem_id, tag_name
+    )
+  `);
+  await db.raw(`
+    DELETE FROM company_tags WHERE rowid NOT IN (
+      SELECT MIN(rowid) FROM company_tags GROUP BY problem_id, company_name
+    )
+  `);
+
+  // Create unique indexes so onConflict().ignore() can detect duplicates
+  try {
+    await db.raw(`
+      CREATE UNIQUE INDEX idx_tags_problem_id_tag_name ON tags(problem_id, tag_name)
+    `);
+  } catch (e) {
+    if (!e.message.includes('already exists')) throw e;
+  }
+  try {
+    await db.raw(`
+      CREATE UNIQUE INDEX idx_company_tags_problem_id_company_name ON company_tags(problem_id, company_name)
+    `);
+  } catch (e) {
+    if (!e.message.includes('already exists')) throw e;
+  }
 }
 
 module.exports = {

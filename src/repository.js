@@ -3,11 +3,12 @@ const { isDueForBox } = require('./schedule');
 
 function normalizeTags(tags) {
   if (!tags) return [];
-  if (Array.isArray(tags)) return tags.map((t) => String(t).trim()).filter(Boolean);
-  if (typeof tags === 'string') {
-    return tags.split(',').map((t) => t.trim()).filter(Boolean);
-  }
-  return [];
+  const list = Array.isArray(tags)
+    ? tags.map((t) => String(t).trim()).filter(Boolean)
+    : typeof tags === 'string'
+    ? tags.split(',').map((t) => t.trim()).filter(Boolean)
+    : [];
+  return [...new Set(list)];
 }
 
 async function withTags(db, rows) {
@@ -51,11 +52,11 @@ async function createProblem(db, payload) {
   const [id] = await db('problems').insert(data);
   const tags = normalizeTags(payload.tags);
   if (tags.length) {
-    await db('tags').insert(tags.map((tag) => ({ problem_id: id, tag_name: tag })));
+    await db('tags').insert(tags.map((tag) => ({ problem_id: id, tag_name: tag }))).onConflict().ignore();
   }
   const companyTags = normalizeTags(payload.company_tags);
   if (companyTags.length) {
-    await db('company_tags').insert(companyTags.map((companyName) => ({ problem_id: id, company_name: companyName })));
+    await db('company_tags').insert(companyTags.map((companyName) => ({ problem_id: id, company_name: companyName }))).onConflict().ignore();
   }
 
   return getProblemById(db, id);
@@ -125,7 +126,7 @@ async function updateProblem(db, id, payload) {
     await db('tags').where({ problem_id: id }).del();
     const tags = normalizeTags(payload.tags);
     if (tags.length) {
-      await db('tags').insert(tags.map((tagName) => ({ problem_id: id, tag_name: tagName })));
+      await db('tags').insert(tags.map((tagName) => ({ problem_id: id, tag_name: tagName }))).onConflict().ignore();
     }
   }
 
@@ -133,7 +134,7 @@ async function updateProblem(db, id, payload) {
     await db('company_tags').where({ problem_id: id }).del();
     const companyTags = normalizeTags(payload.company_tags);
     if (companyTags.length) {
-      await db('company_tags').insert(companyTags.map((companyName) => ({ problem_id: id, company_name: companyName })));
+      await db('company_tags').insert(companyTags.map((companyName) => ({ problem_id: id, company_name: companyName }))).onConflict().ignore();
     }
   }
 
@@ -150,6 +151,16 @@ async function moveProblemBox(db, id, box) {
   if (!Number.isInteger(numericBox) || numericBox < 1) return null;
 
   return db.transaction(async (trx) => {
+    const problem = await trx('problems').where({ id }).limit(1).first();
+    if (!problem) return null;
+
+    // Can't review the same problem twice in one day
+    const lastReviewedDate = problem.last_reviewed
+      ? new Date(problem.last_reviewed).toISOString().slice(0, 10)
+      : null;
+    const today = new Date().toISOString().slice(0, 10);
+    if (lastReviewedDate === today) return null;
+
     const updated = await trx('problems').where({ id }).update({ box: numericBox, last_reviewed: trx.fn.now() });
     if (!updated) return null;
 

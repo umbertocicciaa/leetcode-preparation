@@ -70,6 +70,8 @@ rsync -a \
     --exclude "scripts" \
     --exclude "test" \
     --exclude "README.md" \
+    --exclude "LICENSE" \
+    --exclude ".gitignore" \
     "$PROJECT_ROOT/" \
     "$NEW_RELEASE/"
 

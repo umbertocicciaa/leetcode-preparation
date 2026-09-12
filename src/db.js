@@ -23,10 +23,9 @@ function createDb() {
     });
   }
 
-  // Releases run from different working directories. Keep SQLite outside the
-  // release tree so deployments and restarts always open the same database.
   const sqlitePath = process.env.SQLITE_PATH
     || path.join(os.homedir(), 'releases', 'dbs', 'leetcode-preparation', 'leetcode-prep.db');
+
   fs.mkdirSync(path.dirname(sqlitePath), { recursive: true });
 
   return knex({
@@ -40,46 +39,95 @@ function createDb() {
 }
 
 async function initSchema(db) {
-  const hasProblems = await db.schema.hasTable('problems');
-  if (!hasProblems) {
+  // Reference tables must exist before PostgreSQL creates problems with an FK
+  // to difficulty_levels.
+  if (!(await db.schema.hasTable('difficulty_levels'))) {
+    await db.schema.createTable('difficulty_levels', (table) => {
+      table.increments('id').primary();
+      table.text('level').notNullable().unique();
+      table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+    });
+  }
+
+  if (!(await db.schema.hasTable('categories'))) {
+    await db.schema.createTable('categories', (table) => {
+      table.increments('id').primary();
+      table.text('name').notNullable().unique();
+      table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+    });
+  }
+
+  if (!(await db.schema.hasTable('companies'))) {
+    await db.schema.createTable('companies', (table) => {
+      table.increments('id').primary();
+      table.text('name').notNullable().unique();
+      table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+    });
+  }
+
+  await db('difficulty_levels')
+    .insert([{ level: 'easy' }, { level: 'medium' }, { level: 'hard' }])
+    .onConflict('level')
+    .ignore();
+
+  if (!(await db.schema.hasTable('problems'))) {
     await db.schema.createTable('problems', (table) => {
       table.increments('id').primary();
       table.text('title').index();
       table.text('description');
       table.text('link');
       table.text('github_link');
-      table.enu('difficulty', ['easy', 'medium', 'hard']).notNullable().defaultTo('easy');
+      table.integer('difficulty_id').notNullable()
+        .references('id').inTable('difficulty_levels');
       table.text('notes');
-      table.text('category').index();
       table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
       table.timestamp('last_reviewed');
       table.integer('box').notNullable().defaultTo(1);
       table.integer('user_id');
+      table.index(['difficulty_id']);
     });
   }
 
-  const hasTags = await db.schema.hasTable('tags');
-  if (!hasTags) {
+  if (!(await db.schema.hasTable('tags'))) {
     await db.schema.createTable('tags', (table) => {
       table.increments('id').primary();
-      table.integer('problem_id').notNullable().references('id').inTable('problems').onDelete('CASCADE');
-      table.text('tag_name').notNullable().index();
+      table.integer('problem_id').notNullable()
+        .references('id').inTable('problems').onDelete('CASCADE');
+      table.text('tag_name').notNullable();
+      table.unique(['problem_id', 'tag_name']);
+      table.index(['problem_id']);
     });
   }
 
-  // Additive migration: this creates a separate many-to-many-style tag table
-  // and leaves every existing problem row untouched.
-  const hasCompanyTags = await db.schema.hasTable('company_tags');
-  if (!hasCompanyTags) {
-    await db.schema.createTable('company_tags', (table) => {
+  if (!(await db.schema.hasTable('problem_categories'))) {
+    await db.schema.createTable('problem_categories', (table) => {
       table.increments('id').primary();
-      table.integer('problem_id').notNullable().references('id').inTable('problems').onDelete('CASCADE');
-      table.text('company_name').notNullable().index();
+      table.integer('problem_id').notNullable()
+        .references('id').inTable('problems').onDelete('CASCADE');
+      table.integer('category_id').notNullable()
+        .references('id').inTable('categories').onDelete('CASCADE');
+      table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+      table.unique(['problem_id', 'category_id']);
+      table.index(['problem_id']);
+      table.index(['category_id']);
     });
   }
 
-  const hasCustomBoxes = await db.schema.hasTable('custom_boxes');
-  if (!hasCustomBoxes) {
+  if (!(await db.schema.hasTable('problem_companies'))) {
+    await db.schema.createTable('problem_companies', (table) => {
+      table.increments('id').primary();
+      table.integer('problem_id').notNullable()
+        .references('id').inTable('problems').onDelete('CASCADE');
+      table.integer('company_id').notNullable()
+        .references('id').inTable('companies').onDelete('CASCADE');
+      table.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+      table.unique(['problem_id', 'company_id']);
+      table.index(['problem_id']);
+      table.index(['company_id']);
+    });
+  }
+
+  if (!(await db.schema.hasTable('custom_boxes'))) {
     await db.schema.createTable('custom_boxes', (table) => {
       table.increments('id').primary();
       table.integer('user_id');
@@ -88,60 +136,15 @@ async function initSchema(db) {
     });
   }
 
-  const hasStudyEvents = await db.schema.hasTable('study_events');
-  if (!hasStudyEvents) {
+  if (!(await db.schema.hasTable('study_events'))) {
     await db.schema.createTable('study_events', (table) => {
       table.increments('id').primary();
-      table.integer('problem_id').notNullable().references('id').inTable('problems').onDelete('CASCADE').index();
+      table.integer('problem_id').notNullable()
+        .references('id').inTable('problems').onDelete('CASCADE');
       table.timestamp('studied_at').notNullable().defaultTo(db.fn.now()).index();
       table.integer('user_id').index();
+      table.index(['problem_id']);
     });
-  }
-
-  // Preserve the available history for databases created before study_events.
-  // A prior version only retained each problem's latest review timestamp.
-  const unrecordedReviews = await db('problems as p')
-    .whereNotNull('p.last_reviewed')
-    .whereNotExists(function noEventForProblem() {
-      this.select('*').from('study_events as se').whereRaw('se.problem_id = p.id');
-    })
-    .select('p.id', 'p.last_reviewed', 'p.user_id');
-
-  if (unrecordedReviews.length) {
-    await db('study_events').insert(unrecordedReviews.map((problem) => ({
-      problem_id: problem.id,
-      studied_at: problem.last_reviewed,
-      user_id: problem.user_id,
-    })));
-  }
-
-  // Clean up duplicate tags: keep only unique (problem_id, tag_name) pairs
-  // Delete duplicates, keeping the first occurrence
-  await db.raw(`
-    DELETE FROM tags WHERE rowid NOT IN (
-      SELECT MIN(rowid) FROM tags GROUP BY problem_id, tag_name
-    )
-  `);
-  await db.raw(`
-    DELETE FROM company_tags WHERE rowid NOT IN (
-      SELECT MIN(rowid) FROM company_tags GROUP BY problem_id, company_name
-    )
-  `);
-
-  // Create unique indexes so onConflict().ignore() can detect duplicates
-  try {
-    await db.raw(`
-      CREATE UNIQUE INDEX idx_tags_problem_id_tag_name ON tags(problem_id, tag_name)
-    `);
-  } catch (e) {
-    if (!e.message.includes('already exists')) throw e;
-  }
-  try {
-    await db.raw(`
-      CREATE UNIQUE INDEX idx_company_tags_problem_id_company_name ON company_tags(problem_id, company_name)
-    `);
-  } catch (e) {
-    if (!e.message.includes('already exists')) throw e;
   }
 }
 

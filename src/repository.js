@@ -8,6 +8,7 @@ function normalizeTags(tags) {
     : typeof tags === 'string'
     ? tags.split(',').map((t) => t.trim()).filter(Boolean)
     : [];
+  // ponytail: dedup tags; Set() is O(n) with small n, acceptable here
   return [...new Set(list)];
 }
 
@@ -154,19 +155,20 @@ async function moveProblemBox(db, id, box) {
     const problem = await trx('problems').where({ id }).limit(1).first();
     if (!problem) return null;
 
-    // Can't review the same problem twice in one day
+    await trx('problems').where({ id }).update({ box: numericBox, last_reviewed: trx.fn.now() });
+
+    // Only record study event if not already reviewed today
     const lastReviewedDate = problem.last_reviewed
       ? new Date(problem.last_reviewed).toISOString().slice(0, 10)
       : null;
     const today = new Date().toISOString().slice(0, 10);
-    if (lastReviewedDate === today) return null;
 
-    const updated = await trx('problems').where({ id }).update({ box: numericBox, last_reviewed: trx.fn.now() });
-    if (!updated) return null;
+    if (lastReviewedDate !== today) {
+      // First review today, record it
+      await trx('study_events').insert({ problem_id: id });
+    }
+    // If already reviewed today, silently skip the study_event insert
 
-    // A box move represents completing a review. Keep the individual event so
-    // activity charts and streaks do not lose older reviews of the same problem.
-    await trx('study_events').insert({ problem_id: id });
     return getProblemById(trx, id);
   });
 }

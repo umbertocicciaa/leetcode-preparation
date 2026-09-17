@@ -22,6 +22,8 @@ let problems = [];
 let draggingProblemId = null;
 let currentEditingId = null;
 let currentNotesId = null;
+let addProblemDraft = null;
+let notesDrafts = {};
 
 function renderMarkdown(text) {
   return marked.parse(text || '');
@@ -48,6 +50,31 @@ function setNotesPreviewExpanded(expanded) {
   notesModal.classList.toggle('preview-expanded', expanded);
   toggleNotesPreviewBtn.setAttribute('aria-pressed', String(expanded));
   toggleNotesPreviewBtn.textContent = expanded ? 'Exit full screen' : 'Read full screen';
+}
+
+function saveAddProblemDraft() {
+  const formData = new FormData(problemForm);
+  addProblemDraft = Object.fromEntries(formData.entries());
+}
+
+function restoreAddProblemDraft() {
+  if (!addProblemDraft) {
+    problemForm.reset();
+    document.getElementById('descriptionPreview').innerHTML = '';
+    return;
+  }
+
+  for (const [name, value] of Object.entries(addProblemDraft)) {
+    const field = problemForm.elements[name];
+    if (field) field.value = value;
+  }
+  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(
+    problemForm.elements.description.value,
+  );
+}
+
+function clearAddProblemDraft() {
+  addProblemDraft = null;
 }
 
 async function request(path, options = {}) {
@@ -239,6 +266,14 @@ async function loadProblems() {
   await renderKanban();
 }
 
+problemForm.addEventListener('input', (event) => {
+  if (currentEditingId === null) saveAddProblemDraft();
+
+  if (event.target === problemForm.elements.description) {
+    document.getElementById('descriptionPreview').innerHTML = renderMarkdown(problemForm.elements.description.value);
+  }
+});
+
 problemForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const formData = new FormData(event.target);
@@ -253,14 +288,11 @@ problemForm.addEventListener('submit', async (event) => {
     body: JSON.stringify(payload),
   });
   event.target.reset();
+  if (!isEdit) clearAddProblemDraft();
   currentEditingId = null;
   closeModal();
   await loadProblems();
   await renderAnalytics();
-});
-
-problemForm.elements.description.addEventListener('input', () => {
-  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(problemForm.elements.description.value);
 });
 
 problemRows.addEventListener('click', async (event) => {
@@ -296,8 +328,10 @@ problemRows.addEventListener('click', async (event) => {
     currentNotesId = id;
     const current = problems.find((p) => p.id === id);
     document.getElementById('noteTitle').textContent = `Notes: ${current.title || 'Problem'}`;
-    notesInput.value = current.notes || '';
-    notesPreview.innerHTML = renderMarkdown(current.notes);
+    notesInput.value = Object.prototype.hasOwnProperty.call(notesDrafts, id)
+      ? notesDrafts[id]
+      : current.notes || '';
+    notesPreview.innerHTML = renderMarkdown(notesInput.value);
     setNotesPreviewExpanded(false);
     notesModal.classList.remove('hidden');
     return;
@@ -319,6 +353,11 @@ problemRows.addEventListener('click', async (event) => {
   problemForm.elements.description.value = current.description || '';
   document.getElementById('descriptionPreview').innerHTML = renderMarkdown(current.description);
   openModal();
+});
+
+notesInput.addEventListener('input', () => {
+  if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
+  notesPreview.innerHTML = renderMarkdown(notesInput.value);
 });
 
 for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter, companyTagsFilter]) {
@@ -346,22 +385,21 @@ openAddProblemBtn.addEventListener('click', () => {
   currentEditingId = null;
   document.getElementById('addProblemTitle').textContent = 'Add Problem';
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
-  problemForm.reset();
-  document.getElementById('descriptionPreview').innerHTML = '';
+  restoreAddProblemDraft();
   openModal();
 });
 closeAddProblemBtn.addEventListener('click', () => {
+  saveAddProblemDraft();
   currentEditingId = null;
   document.getElementById('addProblemTitle').textContent = 'Add Problem';
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
   closeModal();
 });
 problemModal.addEventListener('click', (event) => {
-  if (event.target === problemModal) closeModal();
-});
-
-notesInput.addEventListener('input', () => {
-  notesPreview.innerHTML = renderMarkdown(notesInput.value);
+  if (event.target === problemModal) {
+    saveAddProblemDraft();
+    closeModal();
+  }
 });
 
 saveNotesBtn.addEventListener('click', async () => {
@@ -370,12 +408,14 @@ saveNotesBtn.addEventListener('click', async () => {
     method: 'PATCH',
     body: JSON.stringify({ notes: notesInput.value }),
   });
+  delete notesDrafts[currentNotesId];
   currentNotesId = null;
   notesModal.classList.add('hidden');
   await loadProblems();
 });
 
 closeNotesBtn.addEventListener('click', () => {
+  if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
   currentNotesId = null;
   setNotesPreviewExpanded(false);
   notesModal.classList.add('hidden');
@@ -393,6 +433,7 @@ document.addEventListener('keydown', (event) => {
 
 notesModal.addEventListener('click', (event) => {
   if (event.target === notesModal) {
+    if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
     currentNotesId = null;
     setNotesPreviewExpanded(false);
     notesModal.classList.add('hidden');

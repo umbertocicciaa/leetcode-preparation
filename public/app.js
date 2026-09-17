@@ -9,11 +9,13 @@ const problemForm = document.getElementById('problemForm');
 const problemModal = document.getElementById('problemModal');
 const openAddProblemBtn = document.getElementById('openAddProblem');
 const closeAddProblemBtn = document.getElementById('closeAddProblem');
+const clearProblemFormBtn = document.getElementById('clearProblemForm');
 const notesModal = document.getElementById('notesModal');
 const notesInput = document.getElementById('notesInput');
 const notesPreview = document.getElementById('notesPreview');
 const closeNotesBtn = document.getElementById('closeNotes');
 const saveNotesBtn = document.getElementById('saveNotes');
+const clearNotesBtn = document.getElementById('clearNotes');
 const toggleNotesPreviewBtn = document.getElementById('toggleNotesPreview');
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
@@ -75,6 +77,8 @@ function restoreAddProblemDraft() {
 
 function clearAddProblemDraft() {
   addProblemDraft = null;
+  problemForm.reset();
+  document.getElementById('descriptionPreview').innerHTML = '';
 }
 
 async function request(path, options = {}) {
@@ -360,6 +364,17 @@ notesInput.addEventListener('input', () => {
   notesPreview.innerHTML = renderMarkdown(notesInput.value);
 });
 
+clearProblemFormBtn.addEventListener('click', () => {
+  clearAddProblemDraft();
+});
+
+clearNotesBtn.addEventListener('click', () => {
+  if (!currentNotesId) return;
+  notesInput.value = '';
+  notesDrafts[currentNotesId] = '';
+  notesPreview.innerHTML = '';
+});
+
 for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter, companyTagsFilter]) {
   input.addEventListener('input', () => {
     loadProblems().catch((err) => alert(err.message));
@@ -410,8 +425,10 @@ saveNotesBtn.addEventListener('click', async () => {
   });
   delete notesDrafts[currentNotesId];
   currentNotesId = null;
+  setNotesPreviewExpanded(false);
   notesModal.classList.add('hidden');
   await loadProblems();
+  await renderAnalytics();
 });
 
 closeNotesBtn.addEventListener('click', () => {
@@ -421,16 +438,6 @@ closeNotesBtn.addEventListener('click', () => {
   notesModal.classList.add('hidden');
 });
 
-toggleNotesPreviewBtn.addEventListener('click', () => {
-  setNotesPreviewExpanded(!notesModal.classList.contains('preview-expanded'));
-});
-
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && notesModal.classList.contains('preview-expanded')) {
-    setNotesPreviewExpanded(false);
-  }
-});
-
 notesModal.addEventListener('click', (event) => {
   if (event.target === notesModal) {
     if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
@@ -438,4 +445,9 @@ notesModal.addEventListener('click', (event) => {
     setNotesPreviewExpanded(false);
     notesModal.classList.add('hidden');
   }
+});
+
+toggleNotesPreviewBtn.addEventListener('click', () => {
+  const expanded = notesModal.classList.contains('preview-expanded');
+  setNotesPreviewExpanded(!expanded);
 });

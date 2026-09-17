@@ -144,7 +144,10 @@
             <textarea name="description" placeholder="Notes / Description (markdown supported)"></textarea>
             <div id="descriptionPreview" class="notes-preview"></div>
           </div>
-          <button type="submit">Save Problem</button>
+          <div class="modal-footer">
+            <button id="clearProblemForm" type="button" class="secondary-btn">Clear Form</button>
+            <button type="submit">Save Problem</button>
+          </div>
         </form>
       </div>
     </div>
@@ -163,6 +166,7 @@
           <div id="notesPreview" class="notes-preview"></div>
         </div>
         <div class="modal-footer">
+          <button id="clearNotes" type="button" class="secondary-btn">Clear Notes</button>
           <button id="saveNotes" type="button">Save Notes</button>
         </div>
       </div>

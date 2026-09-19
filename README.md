@@ -60,6 +60,8 @@ docker compose -f compose.yaml -f compose.proxy.yaml up -d --build
 
 Set `PROXY_NETWORK` in `.env` if your proxy network has a different name.
 
+When using the proxy override, the app is **not** published on a host port (the reverse proxy reaches it over the Docker network). If you deploy with `compose.yaml` only, set `APP_PORT` to a free host port if `3000` is already in use.
+
 ## Komodo
 
 The repository is ready to be deployed as a Komodo Stack using `compose.yaml` (Komodo's default Compose file name).

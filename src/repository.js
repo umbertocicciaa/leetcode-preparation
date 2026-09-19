@@ -25,6 +25,12 @@ function normalizeDifficulty(value) {
   return difficulty;
 }
 
+async function insertReturningId(db, table, data) {
+  const rows = await db(table).insert(data).returning('id');
+  const row = rows[0];
+  return typeof row === 'object' ? row.id : row;
+}
+
 async function ensureDifficultyId(db, difficulty) {
   const level = normalizeDifficulty(difficulty);
   const row = await db('difficulty_levels')
@@ -222,7 +228,7 @@ async function createProblem(db, payload) {
       user_id: payload.user_id || null,
     };
 
-    const [id] = await trx('problems').insert(data);
+    const id = await insertReturningId(trx, 'problems', data);
 
     await writeRelations(
       trx,

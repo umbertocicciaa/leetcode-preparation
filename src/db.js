@@ -9,7 +9,8 @@ const DEFAULT_BOXES = [
   { box_order: 3, box_name: 'Box 3a (Wednesday)' },
   { box_order: 4, box_name: 'Box 3b (Saturday)' },
   { box_order: 5, box_name: 'Box 4 (Sunday)' },
-  { box_order: 6, box_name: 'Box 5 (Pre-exam)' },
+  { box_order: 6, box_name: 'Box 6 (After one month)' },
+  { box_order: 7, box_name: 'Box 7 (Pre-exam)' },
 ];
 
 function createDb() {

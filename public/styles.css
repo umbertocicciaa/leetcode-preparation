@@ -104,3 +104,43 @@ th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
 .markdown-viewer p { margin: 0.35rem 0; }
 .markdown-viewer ul, .markdown-viewer ol { margin: 0.35rem 0; padding-left: 1.5rem; }
 .markdown-viewer code { background: #e5e7eb; padding: 0.2rem 0.4rem; border-radius: 3px; }
+
+
+/* Problem action buttons */
+
+.action-btn-notes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+  font-weight: 600;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.action-btn-notes:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  transform: translateY(-1px);
+}
+
+.action-btn-notes:active {
+  transform: translateY(0);
+}
+
+.action-btn-notes:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.action-btn-notes span:first-child {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .action-btn-notes span:last-child {
+    display: none;
+  }
+}

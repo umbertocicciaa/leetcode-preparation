@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: leetcode-preparation:latest
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3000}:3000"
@@ -15,6 +16,12 @@ services:
         condition: service_healthy
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/boxes').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   db:
     image: postgres:18-alpine
@@ -41,4 +48,3 @@ volumes:
 
 networks:
   app_network:
-    name: ${DOCKER_NETWORK:-leetcode_network}

@@ -100,7 +100,7 @@ async function withRelations(db, rows) {
       .join('companies as c', 'c.id', 'pc.company_id')
       .select('pc.problem_id', 'c.id as company_id', 'c.name')
       .whereIn('pc.problem_id', ids)
-      .orderBy('c.name'),
+      .orderBy('pc.id'),
   ]);
 
   const byProblem = new Map();

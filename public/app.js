@@ -445,7 +445,6 @@ saveNotesBtn.addEventListener('click', async () => {
 closeNotesBtn.addEventListener('click', () => {
   if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
   currentNotesId = null;
-  setNotesMarkdownVisible(false);
   notesModal.classList.add('hidden');
 });
 
@@ -453,7 +452,6 @@ notesModal.addEventListener('click', (event) => {
   if (event.target === notesModal) {
     if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
     currentNotesId = null;
-    setNotesMarkdownVisible(false);
     notesModal.classList.add('hidden');
   }
 });

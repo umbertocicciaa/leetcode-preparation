@@ -14,6 +14,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - app_network
 
   db:
     image: postgres:18-alpine
@@ -24,6 +26,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     volumes:
       - leetcode_postgres_data:/var/lib/postgresql
+    networks:
+      - app_network
     healthcheck:
       test:
         - CMD-SHELL
@@ -35,3 +39,7 @@ services:
 
 volumes:
   leetcode_postgres_data:
+
+networks:
+  app_network:
+    name: ${DOCKER_NETWORK:-leetcode_network}

@@ -79,8 +79,17 @@ th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
 .modal-actions { display: flex; align-items: center; gap: 0.5rem; }
 .secondary-btn { background: #e5e7eb; color: #1e3a8a; }
 .close-btn { background: #e5e7eb; color: #111827; width: 2rem; height: 2rem; padding: 0; border-radius: 999px; }
-.notes-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
-#notesInput { resize: vertical; min-height: 200px; }
+.notes-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+#notesInput {
+  width: min(100%, 680px);
+  min-height: 260px;
+  box-sizing: border-box;
+  resize: vertical;
+}
 .notes-preview { border: 1px solid #d0d7e4; border-radius: 8px; padding: 0.6rem; background: #fafbfc; overflow: auto; max-height: 200px; font-size: 0.9rem; line-height: 1.5; }
 .notes-preview pre { max-width: 100%; overflow: auto; }
 .notes-preview img { max-width: 100%; height: auto; }

@@ -611,6 +611,100 @@ async function listReviewsByDay(db, date) {
   return withRelations(db, reviewsForDay);
 }
 
+const DATABASE_TABLES = [
+  'difficulty_levels',
+  'categories',
+  'companies',
+  'problems',
+  'tags',
+  'problem_categories',
+  'problem_companies',
+  'custom_boxes',
+  'study_events',
+];
+
+const IMPORT_DELETE_ORDER = [
+  'study_events',
+  'problem_companies',
+  'problem_categories',
+  'tags',
+  'problems',
+  'custom_boxes',
+  'companies',
+  'categories',
+  'difficulty_levels',
+];
+
+async function exportDatabase(db) {
+  const tables = {};
+
+  for (const table of DATABASE_TABLES) {
+    tables[table] = await db(table).select('*');
+  }
+
+  return {
+    format: 'leetcode-preparation-db',
+    version: 1,
+    exported_at: new Date().toISOString(),
+    tables,
+  };
+}
+
+function validateDatabaseExport(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') {
+    throw new Error('Invalid database export');
+  }
+
+  if (snapshot.format !== 'leetcode-preparation-db' || snapshot.version !== 1) {
+    throw new Error('Unsupported database export format');
+  }
+
+  if (!snapshot.tables || typeof snapshot.tables !== 'object') {
+    throw new Error('Database export is missing tables');
+  }
+
+  for (const table of DATABASE_TABLES) {
+    if (!Array.isArray(snapshot.tables[table])) {
+      throw new Error(`Database export is missing table: ${table}`);
+    }
+  }
+}
+
+async function importDatabase(db, snapshot) {
+  validateDatabaseExport(snapshot);
+
+  return db.transaction(async (trx) => {
+    for (const table of IMPORT_DELETE_ORDER) {
+      await trx(table).del();
+    }
+
+    for (const table of DATABASE_TABLES) {
+      const rows = snapshot.tables[table];
+      if (!rows.length) continue;
+      await trx(table).insert(rows);
+    }
+
+    // Explicit IDs are restored by an import. PostgreSQL identity sequences
+    // must be advanced afterwards so the next insert does not reuse an ID.
+    if (trx.client.config.client === 'pg') {
+      for (const table of DATABASE_TABLES) {
+        const idColumn = 'id';
+        const hasId = await trx.schema.hasColumn(table, idColumn);
+        if (!hasId) continue;
+
+        const maxRow = await trx(table).max({ maxId: idColumn }).first();
+        const maxId = Number(maxRow?.maxId || 0);
+        if (maxId > 0) {
+          await trx.raw(
+            'SELECT setval(pg_get_serial_sequence(??, ?), ?, true)',
+            [table, idColumn, maxId],
+          );
+        }
+      }
+    }
+  });
+}
+
 module.exports = {
   createProblem,
   listProblems,
@@ -621,4 +715,6 @@ module.exports = {
   listBoxes,
   analytics,
   listReviewsByDay,
+  exportDatabase,
+  importDatabase,
 };

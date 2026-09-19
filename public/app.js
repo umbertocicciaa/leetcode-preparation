@@ -10,13 +10,16 @@ const problemModal = document.getElementById('problemModal');
 const openAddProblemBtn = document.getElementById('openAddProblem');
 const closeAddProblemBtn = document.getElementById('closeAddProblem');
 const clearProblemFormBtn = document.getElementById('clearProblemForm');
+const toggleDescriptionMarkdownBtn = document.getElementById('toggleDescriptionMarkdown');
+const descriptionPreview = document.getElementById('descriptionPreview');
 const notesModal = document.getElementById('notesModal');
 const notesInput = document.getElementById('notesInput');
 const notesPreview = document.getElementById('notesPreview');
 const closeNotesBtn = document.getElementById('closeNotes');
 const saveNotesBtn = document.getElementById('saveNotes');
 const clearNotesBtn = document.getElementById('clearNotes');
-const toggleNotesPreviewBtn = document.getElementById('toggleNotesPreview');
+const toggleNotesMarkdownBtn = document.getElementById('toggleNotesMarkdown');
+const toggleNotesPreviewBtn = null;
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
@@ -26,6 +29,8 @@ let currentEditingId = null;
 let currentNotesId = null;
 let addProblemDraft = null;
 let notesDrafts = {};
+let descriptionMarkdownVisible = false;
+let notesMarkdownVisible = false;
 
 function renderMarkdown(text) {
   return marked.parse(text || '');
@@ -48,10 +53,26 @@ function closeModal() {
   problemModal.classList.add('hidden');
 }
 
-function setNotesPreviewExpanded(expanded) {
-  notesModal.classList.toggle('preview-expanded', expanded);
-  toggleNotesPreviewBtn.setAttribute('aria-pressed', String(expanded));
-  toggleNotesPreviewBtn.textContent = expanded ? 'Exit full screen' : 'Read full screen';
+function setDescriptionMarkdownVisible(visible) {
+  descriptionMarkdownVisible = visible;
+  problemForm.elements.description.classList.toggle('hidden', visible);
+  descriptionPreview.classList.toggle('hidden', !visible);
+  toggleDescriptionMarkdownBtn.setAttribute('aria-pressed', String(visible));
+  toggleDescriptionMarkdownBtn.textContent = visible ? 'Edit Markdown' : 'Visualize Markdown';
+  if (visible) {
+    descriptionPreview.innerHTML = renderMarkdown(problemForm.elements.description.value);
+  }
+}
+
+function setNotesMarkdownVisible(visible) {
+  notesMarkdownVisible = visible;
+  notesInput.classList.toggle('hidden', visible);
+  notesPreview.classList.toggle('hidden', !visible);
+  toggleNotesMarkdownBtn.setAttribute('aria-pressed', String(visible));
+  toggleNotesMarkdownBtn.textContent = visible ? 'Edit Markdown' : 'Visualize Markdown';
+  if (visible) {
+    notesPreview.innerHTML = renderMarkdown(notesInput.value);
+  }
 }
 
 function saveAddProblemDraft() {
@@ -62,7 +83,7 @@ function saveAddProblemDraft() {
 function restoreAddProblemDraft() {
   if (!addProblemDraft) {
     problemForm.reset();
-    document.getElementById('descriptionPreview').innerHTML = '';
+    descriptionPreview.innerHTML = '';
     return;
   }
 
@@ -70,15 +91,13 @@ function restoreAddProblemDraft() {
     const field = problemForm.elements[name];
     if (field) field.value = value;
   }
-  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(
-    problemForm.elements.description.value,
-  );
+  descriptionPreview.innerHTML = renderMarkdown(problemForm.elements.description.value);
 }
 
 function clearAddProblemDraft() {
   addProblemDraft = null;
   problemForm.reset();
-  document.getElementById('descriptionPreview').innerHTML = '';
+  descriptionPreview.innerHTML = '';
 }
 
 async function request(path, options = {}) {
@@ -274,7 +293,9 @@ problemForm.addEventListener('input', (event) => {
   if (currentEditingId === null) saveAddProblemDraft();
 
   if (event.target === problemForm.elements.description) {
-    document.getElementById('descriptionPreview').innerHTML = renderMarkdown(problemForm.elements.description.value);
+    if (descriptionMarkdownVisible) {
+      descriptionPreview.innerHTML = renderMarkdown(problemForm.elements.description.value);
+    }
   }
 });
 
@@ -294,6 +315,7 @@ problemForm.addEventListener('submit', async (event) => {
   event.target.reset();
   if (!isEdit) clearAddProblemDraft();
   currentEditingId = null;
+  setDescriptionMarkdownVisible(false);
   closeModal();
   await loadProblems();
   await renderAnalytics();
@@ -319,7 +341,7 @@ problemRows.addEventListener('click', async (event) => {
   if (target.hasAttribute('data-delete')) {
     const current = problems.find((p) => p.id === id);
     const problemTitle = current?.title || 'this problem';
-    const confirmed = window.confirm(`Are you sure you want to delete \"${problemTitle}\"? This action cannot be undone.`);
+    const confirmed = window.confirm(`Are you sure you want to delete "${problemTitle}"? This action cannot be undone.`);
     if (!confirmed) return;
 
     await request(`/api/problems/${id}`, { method: 'DELETE' });
@@ -335,8 +357,8 @@ problemRows.addEventListener('click', async (event) => {
     notesInput.value = Object.prototype.hasOwnProperty.call(notesDrafts, id)
       ? notesDrafts[id]
       : current.notes || '';
+    setNotesMarkdownVisible(false);
     notesPreview.innerHTML = renderMarkdown(notesInput.value);
-    setNotesPreviewExpanded(false);
     notesModal.classList.remove('hidden');
     return;
   }
@@ -355,13 +377,16 @@ problemRows.addEventListener('click', async (event) => {
   problemForm.elements.company_tags.value = (current.company_tags || []).join(', ');
   problemForm.elements.difficulty.value = current.difficulty || 'easy';
   problemForm.elements.description.value = current.description || '';
-  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(current.description);
+  setDescriptionMarkdownVisible(false);
+  descriptionPreview.innerHTML = renderMarkdown(current.description);
   openModal();
 });
 
 notesInput.addEventListener('input', () => {
   if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
-  notesPreview.innerHTML = renderMarkdown(notesInput.value);
+  if (notesMarkdownVisible) {
+    notesPreview.innerHTML = renderMarkdown(notesInput.value);
+  }
 });
 
 clearProblemFormBtn.addEventListener('click', () => {
@@ -373,6 +398,14 @@ clearNotesBtn.addEventListener('click', () => {
   notesInput.value = '';
   notesDrafts[currentNotesId] = '';
   notesPreview.innerHTML = '';
+});
+
+toggleDescriptionMarkdownBtn.addEventListener('click', () => {
+  setDescriptionMarkdownVisible(!descriptionMarkdownVisible);
+});
+
+toggleNotesMarkdownBtn.addEventListener('click', () => {
+  setNotesMarkdownVisible(!notesMarkdownVisible);
 });
 
 for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter, companyTagsFilter]) {
@@ -400,19 +433,25 @@ openAddProblemBtn.addEventListener('click', () => {
   currentEditingId = null;
   document.getElementById('addProblemTitle').textContent = 'Add Problem';
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
+  setDescriptionMarkdownVisible(false);
   restoreAddProblemDraft();
   openModal();
 });
+
 closeAddProblemBtn.addEventListener('click', () => {
   saveAddProblemDraft();
   currentEditingId = null;
+  setDescriptionMarkdownVisible(false);
   document.getElementById('addProblemTitle').textContent = 'Add Problem';
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
   closeModal();
 });
+
 problemModal.addEventListener('click', (event) => {
   if (event.target === problemModal) {
     saveAddProblemDraft();
+    currentEditingId = null;
+    setDescriptionMarkdownVisible(false);
     closeModal();
   }
 });
@@ -425,7 +464,7 @@ saveNotesBtn.addEventListener('click', async () => {
   });
   delete notesDrafts[currentNotesId];
   currentNotesId = null;
-  setNotesPreviewExpanded(false);
+  setNotesMarkdownVisible(false);
   notesModal.classList.add('hidden');
   await loadProblems();
   await renderAnalytics();
@@ -434,7 +473,7 @@ saveNotesBtn.addEventListener('click', async () => {
 closeNotesBtn.addEventListener('click', () => {
   if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
   currentNotesId = null;
-  setNotesPreviewExpanded(false);
+  setNotesMarkdownVisible(false);
   notesModal.classList.add('hidden');
 });
 
@@ -442,12 +481,7 @@ notesModal.addEventListener('click', (event) => {
   if (event.target === notesModal) {
     if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
     currentNotesId = null;
-    setNotesPreviewExpanded(false);
+    setNotesMarkdownVisible(false);
     notesModal.classList.add('hidden');
   }
-});
-
-toggleNotesPreviewBtn.addEventListener('click', () => {
-  const expanded = notesModal.classList.contains('preview-expanded');
-  setNotesPreviewExpanded(!expanded);
 });

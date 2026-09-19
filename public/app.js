@@ -19,7 +19,7 @@ const closeNotesBtn = document.getElementById('closeNotes');
 const saveNotesBtn = document.getElementById('saveNotes');
 const clearNotesBtn = document.getElementById('clearNotes');
 const toggleNotesMarkdownBtn = document.getElementById('toggleNotesMarkdown');
-const toggleNotesPreviewBtn = null;
+const toggleNotesPreviewBtn = document.getElementById('toggleNotesPreview');
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
@@ -62,6 +62,12 @@ function setDescriptionMarkdownVisible(visible) {
   if (visible) {
     descriptionPreview.innerHTML = renderMarkdown(problemForm.elements.description.value);
   }
+}
+
+function setNotesPreviewExpanded(expanded) {
+  notesModal.classList.toggle('preview-expanded', expanded);
+  toggleNotesPreviewBtn.setAttribute('aria-pressed', String(expanded));
+  toggleNotesPreviewBtn.textContent = expanded ? 'Exit full screen' : 'Read full screen';
 }
 
 function setNotesMarkdownVisible(visible) {
@@ -358,6 +364,7 @@ problemRows.addEventListener('click', async (event) => {
       ? notesDrafts[id]
       : current.notes || '';
     setNotesMarkdownVisible(false);
+    setNotesPreviewExpanded(false);
     notesPreview.innerHTML = renderMarkdown(notesInput.value);
     notesModal.classList.remove('hidden');
     return;
@@ -465,6 +472,7 @@ saveNotesBtn.addEventListener('click', async () => {
   delete notesDrafts[currentNotesId];
   currentNotesId = null;
   setNotesMarkdownVisible(false);
+  setNotesPreviewExpanded(false);
   notesModal.classList.add('hidden');
   await loadProblems();
   await renderAnalytics();
@@ -484,4 +492,10 @@ notesModal.addEventListener('click', (event) => {
     setNotesMarkdownVisible(false);
     notesModal.classList.add('hidden');
   }
+});
+
+
+toggleNotesPreviewBtn.addEventListener('click', () => {
+  const expanded = notesModal.classList.contains('preview-expanded');
+  setNotesPreviewExpanded(!expanded);
 });

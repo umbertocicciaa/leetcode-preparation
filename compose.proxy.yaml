@@ -1,5 +1,6 @@
 services:
   app:
+    ports: !reset []
     networks:
       - app_network
       - proxy

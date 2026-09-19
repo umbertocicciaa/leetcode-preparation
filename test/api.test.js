@@ -205,6 +205,6 @@ test('UI defines the settings section and database import/export controls', () =
   assert.match(html, /id="exportDatabase"/);
   assert.match(html, /id="importDatabase"/);
   assert.match(html, /id="importDatabaseFile"/);
-  assert.match(js, //api/settings/export/);
-  assert.match(js, //api/settings/import/);
+  assert.match(js, /api\/settings\/export/);
+  assert.match(js, /api\/settings\/import/);
 });

@@ -49,15 +49,27 @@ docker compose down
 
 Do not use `docker compose down -v` unless you intentionally want to delete the persistent PostgreSQL volume.
 
+### Reverse proxy (optional)
+
+To attach the app to an existing external Docker network (for example Traefik or Nginx Proxy Manager), use the proxy override:
+
+```bash
+docker network create proxy   # once on the host
+docker compose -f compose.yaml -f compose.proxy.yaml up -d --build
+```
+
+Set `PROXY_NETWORK` in `.env` if your proxy network has a different name.
+
 ## Komodo
 
-The repository is ready to be deployed as a Komodo Stack using `docker-compose.yml`.
+The repository is ready to be deployed as a Komodo Stack using `compose.yaml` (Komodo's default Compose file name).
 
 Recommended stack configuration:
 
 - Repository: `https://github.com/umbertocicciaa/leetcode-preparation.git`
-- Branch: `main` (or `feat/docker-komodo-deployment` while testing)
-- Compose file: `docker-compose.yml`
+- Branch: `main`
+- Compose file(s): `compose.yaml` (or `compose.yaml` + `compose.proxy.yaml` for reverse proxy)
+- `run_build`: `true`
 
 Set the PostgreSQL credentials as Komodo stack environment variables/secrets rather than committing them to Git:
 
@@ -68,6 +80,18 @@ POSTGRES_PASSWORD=<strong-password>
 APP_PORT=3000
 ```
 
+When using the proxy override, also set:
+
+```text
+PROXY_NETWORK=proxy
+```
+
+And create the external network on the server before deploying:
+
+```bash
+docker network create proxy
+```
+
 The PostgreSQL data lives in the named volume `leetcode_postgres_data`, so application container replacement does not remove the database.
 
 For local validation of the Komodo-oriented configuration:
@@ -75,6 +99,15 @@ For local validation of the Komodo-oriented configuration:
 ```bash
 KOMODO_SERVER=<server> \
 KOMODO_HOST=<host> \
+./scripts/deploy-komodo.sh
+```
+
+To validate with the proxy override:
+
+```bash
+KOMODO_SERVER=<server> \
+KOMODO_HOST=<host> \
+USE_PROXY=true \
 ./scripts/deploy-komodo.sh
 ```
 

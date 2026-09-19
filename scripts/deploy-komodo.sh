@@ -9,6 +9,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 KOMODO_SERVER="${KOMODO_SERVER:-}"
 KOMODO_STACK="${KOMODO_STACK:-$APP_NAME}"
 KOMODO_HOST="${KOMODO_HOST:-}"
+KOMODO_BRANCH="${KOMODO_BRANCH:-main}"
+USE_PROXY="${USE_PROXY:-false}"
 
 log() {
   printf '\033[1;34m[%s]\033[0m %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -41,16 +43,31 @@ log "Validating Compose configuration"
 TEMP_ENV="$(mktemp)"
 trap 'rm -f "$TEMP_ENV"' EXIT
 printf 'POSTGRES_PASSWORD=dummy-password\nAPP_PORT=3000\n' > "$TEMP_ENV"
-docker compose -f "$PROJECT_ROOT/docker-compose.yml" --env-file "$TEMP_ENV" config >/dev/null
 
-log "Compose configuration is valid"
+docker compose -f "$PROJECT_ROOT/compose.yaml" --env-file "$TEMP_ENV" config >/dev/null
+log "compose.yaml is valid"
+
+if [[ "$USE_PROXY" == "true" ]]; then
+  docker compose \
+    -f "$PROJECT_ROOT/compose.yaml" \
+    -f "$PROJECT_ROOT/compose.proxy.yaml" \
+    --env-file "$TEMP_ENV" \
+    config >/dev/null
+  log "compose.yaml + compose.proxy.yaml is valid"
+fi
+
+FILE_PATHS='["compose.yaml"]'
+if [[ "$USE_PROXY" == "true" ]]; then
+  FILE_PATHS='["compose.yaml", "compose.proxy.yaml"]'
+fi
 
 cat <<EOF
 
 Komodo stack configuration:
   Repository: https://github.com/umbertocicciaa/leetcode-preparation.git
-  Branch: ${KOMODO_BRANCH:-main}
-  Compose file: docker-compose.yml
+  Branch: $KOMODO_BRANCH
+  Compose files: $FILE_PATHS
+  run_build: true
   Stack: $KOMODO_STACK
 
 Set these environment variables in Komodo:
@@ -58,6 +75,12 @@ Set these environment variables in Komodo:
   POSTGRES_DB=leetcode
   POSTGRES_USER=leetcode
   APP_PORT=3000
+
+Optional (when using compose.proxy.yaml):
+  PROXY_NETWORK=proxy
+
+Before deploying with the proxy override, create the external network on the server:
+  docker network create proxy
 
 Persistent volume:
   leetcode_postgres_data

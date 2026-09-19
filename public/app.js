@@ -84,7 +84,6 @@ function restoreAddProblemDraft() {
 function clearAddProblemDraft() {
   addProblemDraft = null;
   problemForm.reset();
-  descriptionPreview.innerHTML = '';
 }
 
 async function request(path, options = {}) {
@@ -279,12 +278,6 @@ async function loadProblems() {
 
 problemForm.addEventListener('input', (event) => {
   if (currentEditingId === null) saveAddProblemDraft();
-
-  if (event.target === problemForm.elements.description) {
-    if (descriptionMarkdownVisible) {
-      descriptionPreview.innerHTML = renderMarkdown(problemForm.elements.description.value);
-    }
-  }
 });
 
 problemForm.addEventListener('submit', async (event) => {

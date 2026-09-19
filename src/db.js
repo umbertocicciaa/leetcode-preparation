@@ -5,10 +5,10 @@ const knex = require('knex');
 
 const DEFAULT_BOXES = [
   { box_order: 1, box_name: 'Box 1 (New/Review Soon)' },
-  { box_order: 2, box_name: 'Box 2 (Weekly)' },
-  { box_order: 3, box_name: 'Box 3a (Bi-weekly Wednesday)' },
-  { box_order: 4, box_name: 'Box 3b (Bi-weekly Saturday)' },
-  { box_order: 5, box_name: 'Box 4 (Monthly)' },
+  { box_order: 2, box_name: 'Box 2 (Before Studying)' },
+  { box_order: 3, box_name: 'Box 3a (Wednesday)' },
+  { box_order: 4, box_name: 'Box 3b (Saturday)' },
+  { box_order: 5, box_name: 'Box 4 (Sunday)' },
   { box_order: 6, box_name: 'Box 5 (Pre-exam)' },
 ];
 

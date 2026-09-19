@@ -59,7 +59,21 @@ th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
 @media (max-width: 600px) { .analytics-columns { grid-template-columns: 1fr; } .notes-container, .description-container { grid-template-columns: 1fr; } }
 .hidden { display: none !important; }
 .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); display: grid; place-items: center; padding: 1rem; }
-.modal-content { width: min(520px, 100%); background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2); padding: 1rem; }
+.modal-content {
+  width: min(520px, calc(100vw - 2rem));
+  min-width: 320px;
+  min-height: 220px;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  box-sizing: border-box;
+  overflow: auto;
+  resize: both;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  padding: 1rem;
+}
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .modal-header h3 { margin: 0; }
 .modal-actions { display: flex; align-items: center; gap: 0.5rem; }
@@ -71,7 +85,7 @@ th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
 .notes-preview pre { max-width: 100%; overflow: auto; }
 .notes-preview img { max-width: 100%; height: auto; }
 #notesModal.preview-expanded { padding: 0; }
-#notesModal.preview-expanded .modal-content { width: 100vw; height: 100vh; max-width: none; border: 0; border-radius: 0; display: flex; flex-direction: column; }
+#notesModal.preview-expanded .modal-content { width: 100vw; height: 100vh; max-width: none; min-width: 0; min-height: 0; border: 0; border-radius: 0; display: flex; flex-direction: column; resize: none; overflow: hidden; }
 #notesModal.preview-expanded .notes-container { display: block; flex: 1; min-height: 0; margin: 0; }
 #notesModal.preview-expanded #notesInput, #notesModal.preview-expanded .modal-footer { display: none; }
 #notesModal.preview-expanded .notes-preview { height: 100%; max-height: none; box-sizing: border-box; }

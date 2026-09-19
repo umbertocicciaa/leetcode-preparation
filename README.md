@@ -94,8 +94,6 @@ docker network create proxy
 
 The PostgreSQL data lives in the named volume `leetcode_postgres_data`, so application container replacement does not remove the database.
 
-A declarative Komodo stack definition is available at `komodo/leetcode-preparation.toml`.
-
 For local validation of the Komodo-oriented configuration:
 
 ```bash

@@ -13,6 +13,9 @@ const clearProblemFormBtn = document.getElementById('clearProblemForm');
 const descriptionModal = document.getElementById('descriptionModal');
 const descriptionViewer = document.getElementById('descriptionViewer');
 const closeDescriptionBtn = document.getElementById('closeDescription');
+const notesViewerModal = document.getElementById('notesViewerModal');
+const notesViewer = document.getElementById('notesViewer');
+const closeNotesViewerBtn = document.getElementById('closeNotesViewer');
 const notesModal = document.getElementById('notesModal');
 const notesInput = document.getElementById('notesInput');
 const notesPreview = document.getElementById('notesPreview');
@@ -127,6 +130,7 @@ function renderProblems() {
       <td>
         ${openProblemAction}
         <button type="button" data-visualize="${problem.id}">Visualize Markdown</button>
+        <button type="button" data-visualize-notes="${problem.id}">Visualize Notes</button>
         <button data-notes="${problem.id}">Notes</button>
         <button data-edit="${problem.id}">Edit</button>
         <button data-delete="${problem.id}">Delete</button>
@@ -308,8 +312,21 @@ problemRows.addEventListener('click', async (event) => {
   const editId = Number(target.getAttribute('data-edit'));
   const openId = Number(target.getAttribute("data-open"));
   const visualizeId = Number(target.getAttribute("data-visualize"));
-  const id = notesId || deleteId || editId || openId || visualizeId;
+  const visualizeNotesId = Number(target.getAttribute("data-visualize-notes"));
+  const id = notesId || deleteId || editId || openId || visualizeId || visualizeNotesId;
   if (!id) return;
+
+  if (target.hasAttribute('data-visualize-notes')) {
+    const problem = problems.find((p) => p.id === visualizeNotesId);
+    if (!problem) return;
+    const notes = Object.prototype.hasOwnProperty.call(notesDrafts, visualizeNotesId)
+      ? notesDrafts[visualizeNotesId]
+      : problem.notes || '';
+    document.getElementById('notesViewerTitle').textContent = problem.title ? `Notes: ${problem.title}` : 'Notes';
+    notesViewer.innerHTML = renderMarkdown(notes);
+    notesViewerModal.classList.remove('hidden');
+    return;
+  }
 
   if (target.hasAttribute('data-visualize')) {
     const problem = problems.find((p) => p.id === visualizeId);
@@ -474,4 +491,13 @@ descriptionModal.addEventListener('click', (event) => {
 
 closeDescriptionBtn.addEventListener('click', () => {
   descriptionModal.classList.add('hidden');
+});
+
+
+notesViewerModal.addEventListener('click', (event) => {
+  if (event.target === notesViewerModal) notesViewerModal.classList.add('hidden');
+});
+
+closeNotesViewerBtn.addEventListener('click', () => {
+  notesViewerModal.classList.add('hidden');
 });

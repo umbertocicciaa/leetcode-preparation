@@ -114,7 +114,7 @@ function renderProblems() {
       <td>${companyTags}</td>
       <td>
         ${openProblemAction}
-        <button type="button" data-visualize="${problem.id}"> Problem </button>
+        <button type="button" data-visualize="${problem.id}">Problem</button>
         <button type="button" data-visualize-notes="${problem.id}">Notes</button>
         <button data-notes="${problem.id}">Edit Notes</button>
         <button data-edit="${problem.id}">Edit Problem</button>

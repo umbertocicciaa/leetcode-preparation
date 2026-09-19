@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: leetcode-preparation:local
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3000}:3000"

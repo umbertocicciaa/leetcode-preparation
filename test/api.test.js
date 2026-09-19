@@ -113,3 +113,98 @@ test('popup handlers are defined at top-level in frontend script', () => {
   assert.match(js, /\nfunction openModal\(\) \{\n  problemModal\.classList\.remove\('hidden'\);\n\}/);
   assert.match(js, /\nfunction closeModal\(\) \{\n  problemModal\.classList\.add\('hidden'\);\n\}/);
 });
+
+
+test('database can be exported and imported with all application data', async () => {
+  const ctx = await setup();
+  try {
+    const createRes = await request(ctx.app)
+      .post('/api/problems')
+      .send({
+        title: 'Export Me',
+        description: 'backup test',
+        link: 'https://leetcode.com/problems/export-me/',
+        difficulty: 'medium',
+        category: 'Arrays',
+        tags: ['backup', 'json'],
+        company_tags: ['Google'],
+      })
+      .expect(201);
+
+    await request(ctx.app)
+      .patch(`/api/problems/${createRes.body.id}/box`)
+      .send({ box: 2 })
+      .expect(200);
+
+    const exportRes = await request(ctx.app)
+      .get('/api/settings/export')
+      .expect(200);
+
+    assert.equal(exportRes.body.format, 'leetcode-preparation-db');
+    assert.equal(exportRes.body.version, 1);
+    assert.ok(exportRes.body.exported_at);
+    assert.ok(Array.isArray(exportRes.body.tables.problems));
+    assert.ok(Array.isArray(exportRes.body.tables.study_events));
+    assert.equal(exportRes.body.tables.problems.length, 1);
+    assert.equal(exportRes.body.tables.tags.length, 2);
+    assert.equal(exportRes.body.tables.study_events.length, 1);
+    assert.match(exportRes.headers['content-disposition'], /attachment/);
+
+    await request(ctx.app)
+      .delete(`/api/problems/${createRes.body.id}`)
+      .expect(204);
+
+    assert.equal((await request(ctx.app).get('/api/problems')).body.length, 0);
+
+    await request(ctx.app)
+      .post('/api/settings/import')
+      .send(exportRes.body)
+      .expect(200);
+
+    const restored = await request(ctx.app)
+      .get('/api/problems')
+      .expect(200);
+
+    assert.equal(restored.body.length, 1);
+    assert.equal(restored.body[0].title, 'Export Me');
+    assert.equal(restored.body[0].box, 2);
+    assert.deepEqual(restored.body[0].tags, ['backup', 'json']);
+    assert.deepEqual(restored.body[0].company_tags, ['Google']);
+    assert.equal(
+      await ctx.db('study_events')
+        .where({ problem_id: createRes.body.id })
+        .count({ count: '*' })
+        .then(([row]) => Number(row.count)),
+      1,
+    );
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('database import rejects unsupported export formats', async () => {
+  const ctx = await setup();
+  try {
+    const response = await request(ctx.app)
+      .post('/api/settings/import')
+      .send({ format: 'unknown', version: 1, tables: {} })
+      .expect(500);
+
+    assert.equal(response.body.error, 'Internal server error');
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('UI defines the settings section and database import/export controls', () => {
+  const html = fs.readFileSync(path.join(process.cwd(), 'public', 'index.html'), 'utf8');
+  const js = fs.readFileSync(path.join(process.cwd(), 'public', 'app.js'), 'utf8');
+
+  assert.match(html, /data-tab="settingsTab"/);
+  assert.match(html, /<section id="settingsTab" class="tab-panel">/);
+  assert.match(html, /id="exportDatabase"/);
+  assert.match(html, /id="importDatabase"/);
+  assert.match(html, /id="importDatabaseFile"/);
+  assert.match(js, //api/settings/export/);
+  assert.match(js, //api/settings/import/);
+});

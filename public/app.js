@@ -23,6 +23,10 @@ const saveNotesBtn = document.getElementById('saveNotes');
 const clearNotesBtn = document.getElementById('clearNotes');
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
+const exportDatabaseBtn = document.getElementById('exportDatabase');
+const importDatabaseBtn = document.getElementById('importDatabase');
+const importDatabaseFile = document.getElementById('importDatabaseFile');
+const settingsStatus = document.getElementById('settingsStatus');
 
 let problems = [];
 let draggingProblemId = null;
@@ -389,6 +393,86 @@ for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter, 
     loadProblems().catch((err) => alert(err.message));
   });
 }
+
+function setSettingsStatus(message, isError = false) {
+  settingsStatus.textContent = message;
+  settingsStatus.classList.toggle('error', isError);
+}
+
+async function exportDatabaseJson() {
+  setSettingsStatus('Preparing export...');
+  const response = await fetch('/api/settings/export');
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Export failed' }));
+    throw new Error(error.error || 'Export failed');
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const filenameMatch = disposition.match(/filename="([^"]+)"/);
+  const filename = filenameMatch?.[1] || 'leetcode-preparation.json';
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+
+  setSettingsStatus('Database exported successfully.');
+}
+
+async function importDatabaseJson(file) {
+  const confirmed = window.confirm(
+    'Importing a database will replace all current application data. Continue?'
+  );
+  if (!confirmed) return;
+
+  setSettingsStatus('Importing database...');
+
+  let snapshot;
+  try {
+    snapshot = JSON.parse(await file.text());
+  } catch {
+    throw new Error('The selected file is not valid JSON.');
+  }
+
+  await request('/api/settings/import', {
+    method: 'POST',
+    body: JSON.stringify(snapshot),
+  });
+
+  notesDrafts = {};
+  currentNotesId = null;
+  setSettingsStatus('Database imported successfully.');
+  await loadProblems();
+  await renderKanban();
+  await renderAnalytics();
+}
+
+
+
+exportDatabaseBtn.addEventListener('click', () => {
+  exportDatabaseJson().catch((err) => setSettingsStatus(err.message, true));
+});
+
+importDatabaseBtn.addEventListener('click', () => {
+  importDatabaseFile.click();
+});
+
+importDatabaseFile.addEventListener('change', () => {
+  const [file] = importDatabaseFile.files;
+  if (!file) return;
+
+  importDatabaseJson(file)
+    .catch((err) => setSettingsStatus(err.message, true))
+    .finally(() => {
+      importDatabaseFile.value = '';
+    });
+});
 
 loadProblems()
   .then(renderAnalytics)

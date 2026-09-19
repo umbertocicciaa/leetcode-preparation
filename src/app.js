@@ -10,11 +10,34 @@ const {
   listBoxes,
   analytics,
   listReviewsByDay,
+  exportDatabase,
+  importDatabase,
 } = require('./repository');
 
 function createApp(db) {
   const app = express();
   app.use(express.json());
+
+  app.get('/api/settings/export', async (_req, res, next) => {
+    try {
+      const snapshot = await exportDatabase(db);
+      const filename = `leetcode-preparation-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(snapshot);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/settings/import', async (req, res, next) => {
+    try {
+      await importDatabase(db, req.body);
+      res.status(200).json({ message: 'Database imported successfully' });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.get('/api/problems', async (req, res, next) => {
     try {

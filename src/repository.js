@@ -696,7 +696,7 @@ async function importDatabase(db, snapshot) {
         const maxId = Number(maxRow?.maxId || 0);
         if (maxId > 0) {
           await trx.raw(
-            'SELECT setval(pg_get_serial_sequence(??, ?), ?, true)',
+            'SELECT setval(pg_get_serial_sequence(?, ?), ?, true)',
             [table, idColumn, maxId],
           );
         }

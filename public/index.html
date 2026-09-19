@@ -140,9 +140,16 @@
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
           </select>
-          <div class="description-container">
-            <textarea name="description" placeholder="Notes / Description (markdown supported)"></textarea>
-            <div id="descriptionPreview" class="notes-preview"></div>
+          <div class="markdown-field">
+            <div class="markdown-toolbar">
+              <button id="toggleDescriptionMarkdown" type="button" class="secondary-btn" aria-pressed="false">
+                Visualize Markdown
+              </button>
+            </div>
+            <div class="description-container">
+              <textarea name="description" placeholder="Notes / Description (markdown supported)"></textarea>
+              <div id="descriptionPreview" class="notes-preview hidden"></div>
+            </div>
           </div>
           <div class="modal-footer">
             <button id="clearProblemForm" type="button" class="secondary-btn">Clear Form</button>
@@ -157,13 +164,13 @@
         <div class="modal-header">
           <h3 id="noteTitle">Notes</h3>
           <div class="modal-actions">
-            <button id="toggleNotesPreview" type="button" class="secondary-btn" aria-pressed="false">Read full screen</button>
+            <button id="toggleNotesMarkdown" type="button" class="secondary-btn" aria-pressed="false">Visualize Markdown</button>
             <button id="closeNotes" class="close-btn" aria-label="Close popup">×</button>
           </div>
         </div>
         <div class="notes-container">
           <textarea id="notesInput" placeholder="Write your notes here (markdown supported)"></textarea>
-          <div id="notesPreview" class="notes-preview"></div>
+          <div id="notesPreview" class="notes-preview hidden"></div>
         </div>
         <div class="modal-footer">
           <button id="clearNotes" type="button" class="secondary-btn">Clear Notes</button>

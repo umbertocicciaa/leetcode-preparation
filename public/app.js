@@ -10,8 +10,9 @@ const problemModal = document.getElementById('problemModal');
 const openAddProblemBtn = document.getElementById('openAddProblem');
 const closeAddProblemBtn = document.getElementById('closeAddProblem');
 const clearProblemFormBtn = document.getElementById('clearProblemForm');
-const toggleDescriptionMarkdownBtn = document.getElementById('toggleDescriptionMarkdown');
-const descriptionPreview = document.getElementById('descriptionPreview');
+const descriptionModal = document.getElementById('descriptionModal');
+const descriptionViewer = document.getElementById('descriptionViewer');
+const closeDescriptionBtn = document.getElementById('closeDescription');
 const notesModal = document.getElementById('notesModal');
 const notesInput = document.getElementById('notesInput');
 const notesPreview = document.getElementById('notesPreview');
@@ -29,7 +30,6 @@ let currentEditingId = null;
 let currentNotesId = null;
 let addProblemDraft = null;
 let notesDrafts = {};
-let descriptionMarkdownVisible = false;
 let notesMarkdownVisible = false;
 
 function renderMarkdown(text) {
@@ -53,18 +53,6 @@ function closeModal() {
   problemModal.classList.add('hidden');
 }
 
-function setDescriptionMarkdownVisible(visible) {
-  descriptionMarkdownVisible = visible;
-  problemForm.elements.description.classList.toggle('hidden', visible);
-  descriptionPreview.classList.toggle('hidden', !visible);
-  toggleDescriptionMarkdownBtn.setAttribute('aria-pressed', String(visible));
-  toggleDescriptionMarkdownBtn.textContent = visible ? 'Edit Markdown' : 'Visualize Markdown';
-  if (visible) {
-    descriptionPreview.innerHTML = renderMarkdown(problemForm.elements.description.value);
-  }
-}
-
-
 function setNotesMarkdownVisible(visible) {
   notesMarkdownVisible = visible;
   notesInput.classList.toggle('hidden', visible);
@@ -84,7 +72,6 @@ function saveAddProblemDraft() {
 function restoreAddProblemDraft() {
   if (!addProblemDraft) {
     problemForm.reset();
-    descriptionPreview.innerHTML = '';
     return;
   }
 
@@ -92,7 +79,6 @@ function restoreAddProblemDraft() {
     const field = problemForm.elements[name];
     if (field) field.value = value;
   }
-  descriptionPreview.innerHTML = renderMarkdown(problemForm.elements.description.value);
 }
 
 function clearAddProblemDraft() {
@@ -141,6 +127,7 @@ function renderProblems() {
       <td>${companyTags}</td>
       <td>
         ${openProblemAction}
+        <button type="button" data-visualize="${problem.id}">Visualize Markdown</button>
         <button data-notes="${problem.id}">Notes</button>
         <button data-edit="${problem.id}">Edit</button>
         <button data-delete="${problem.id}">Delete</button>
@@ -328,8 +315,18 @@ problemRows.addEventListener('click', async (event) => {
   const deleteId = Number(target.getAttribute('data-delete'));
   const editId = Number(target.getAttribute('data-edit'));
   const openId = Number(target.getAttribute("data-open"));
-  const id = notesId || deleteId || editId || openId;
+  const visualizeId = Number(target.getAttribute("data-visualize"));
+  const id = notesId || deleteId || editId || openId || visualizeId;
   if (!id) return;
+
+  if (target.hasAttribute('data-visualize')) {
+    const problem = problems.find((p) => p.id === visualizeId);
+    if (!problem) return;
+    document.getElementById('descriptionTitle').textContent = problem.title || 'Problem Description';
+    descriptionViewer.innerHTML = renderMarkdown(problem.description || '');
+    descriptionModal.classList.remove('hidden');
+    return;
+  }
 
   if (target.hasAttribute('data-open')) {
     const problem = problems.find((p) => p.id === openId);
@@ -378,8 +375,6 @@ problemRows.addEventListener('click', async (event) => {
   problemForm.elements.company_tags.value = (current.company_tags || []).join(', ');
   problemForm.elements.difficulty.value = current.difficulty || 'easy';
   problemForm.elements.description.value = current.description || '';
-  setDescriptionMarkdownVisible(false);
-  descriptionPreview.innerHTML = renderMarkdown(current.description);
   openModal();
 });
 
@@ -399,10 +394,6 @@ clearNotesBtn.addEventListener('click', () => {
   notesInput.value = '';
   notesDrafts[currentNotesId] = '';
   notesPreview.innerHTML = '';
-});
-
-toggleDescriptionMarkdownBtn.addEventListener('click', () => {
-  setDescriptionMarkdownVisible(!descriptionMarkdownVisible);
 });
 
 toggleNotesMarkdownBtn.addEventListener('click', () => {
@@ -434,7 +425,6 @@ openAddProblemBtn.addEventListener('click', () => {
   currentEditingId = null;
   document.getElementById('addProblemTitle').textContent = 'Add Problem';
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
-  setDescriptionMarkdownVisible(false);
   restoreAddProblemDraft();
   openModal();
 });
@@ -442,7 +432,6 @@ openAddProblemBtn.addEventListener('click', () => {
 closeAddProblemBtn.addEventListener('click', () => {
   saveAddProblemDraft();
   currentEditingId = null;
-  setDescriptionMarkdownVisible(false);
   document.getElementById('addProblemTitle').textContent = 'Add Problem';
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
   closeModal();
@@ -452,7 +441,6 @@ problemModal.addEventListener('click', (event) => {
   if (event.target === problemModal) {
     saveAddProblemDraft();
     currentEditingId = null;
-    setDescriptionMarkdownVisible(false);
     closeModal();
   }
 });
@@ -485,4 +473,13 @@ notesModal.addEventListener('click', (event) => {
     setNotesMarkdownVisible(false);
     notesModal.classList.add('hidden');
   }
+});
+
+
+descriptionModal.addEventListener('click', (event) => {
+  if (event.target === descriptionModal) descriptionModal.classList.add('hidden');
+});
+
+closeDescriptionBtn.addEventListener('click', () => {
+  descriptionModal.classList.add('hidden');
 });

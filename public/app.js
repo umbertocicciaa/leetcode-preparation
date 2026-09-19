@@ -296,7 +296,6 @@ problemForm.addEventListener('submit', async (event) => {
   event.target.reset();
   if (!isEdit) clearAddProblemDraft();
   currentEditingId = null;
-  setDescriptionMarkdownVisible(false);
   closeModal();
   await loadProblems();
   await renderAnalytics();

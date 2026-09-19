@@ -10,13 +10,17 @@ const problemModal = document.getElementById('problemModal');
 const openAddProblemBtn = document.getElementById('openAddProblem');
 const closeAddProblemBtn = document.getElementById('closeAddProblem');
 const clearProblemFormBtn = document.getElementById('clearProblemForm');
+const descriptionModal = document.getElementById('descriptionModal');
+const descriptionViewer = document.getElementById('descriptionViewer');
+const closeDescriptionBtn = document.getElementById('closeDescription');
+const notesViewerModal = document.getElementById('notesViewerModal');
+const notesViewer = document.getElementById('notesViewer');
+const closeNotesViewerBtn = document.getElementById('closeNotesViewer');
 const notesModal = document.getElementById('notesModal');
 const notesInput = document.getElementById('notesInput');
-const notesPreview = document.getElementById('notesPreview');
 const closeNotesBtn = document.getElementById('closeNotes');
 const saveNotesBtn = document.getElementById('saveNotes');
 const clearNotesBtn = document.getElementById('clearNotes');
-const toggleNotesPreviewBtn = document.getElementById('toggleNotesPreview');
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
@@ -48,12 +52,6 @@ function closeModal() {
   problemModal.classList.add('hidden');
 }
 
-function setNotesPreviewExpanded(expanded) {
-  notesModal.classList.toggle('preview-expanded', expanded);
-  toggleNotesPreviewBtn.setAttribute('aria-pressed', String(expanded));
-  toggleNotesPreviewBtn.textContent = expanded ? 'Exit full screen' : 'Read full screen';
-}
-
 function saveAddProblemDraft() {
   const formData = new FormData(problemForm);
   addProblemDraft = Object.fromEntries(formData.entries());
@@ -62,7 +60,6 @@ function saveAddProblemDraft() {
 function restoreAddProblemDraft() {
   if (!addProblemDraft) {
     problemForm.reset();
-    document.getElementById('descriptionPreview').innerHTML = '';
     return;
   }
 
@@ -70,15 +67,11 @@ function restoreAddProblemDraft() {
     const field = problemForm.elements[name];
     if (field) field.value = value;
   }
-  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(
-    problemForm.elements.description.value,
-  );
 }
 
 function clearAddProblemDraft() {
   addProblemDraft = null;
   problemForm.reset();
-  document.getElementById('descriptionPreview').innerHTML = '';
 }
 
 async function request(path, options = {}) {
@@ -121,9 +114,11 @@ function renderProblems() {
       <td>${companyTags}</td>
       <td>
         ${openProblemAction}
-        <button data-notes="${problem.id}">Notes</button>
-        <button data-edit="${problem.id}">Edit</button>
-        <button data-delete="${problem.id}">Delete</button>
+        <button type="button" data-visualize="${problem.id}"> Problem </button>
+        <button type="button" data-visualize-notes="${problem.id}">Notes</button>
+        <button data-notes="${problem.id}">Edit Notes</button>
+        <button data-edit="${problem.id}">Edit Problem</button>
+        <button data-delete="${problem.id}">Delete Problem</button>
       </td>
     `;
     problemRows.appendChild(tr);
@@ -272,10 +267,6 @@ async function loadProblems() {
 
 problemForm.addEventListener('input', (event) => {
   if (currentEditingId === null) saveAddProblemDraft();
-
-  if (event.target === problemForm.elements.description) {
-    document.getElementById('descriptionPreview').innerHTML = renderMarkdown(problemForm.elements.description.value);
-  }
 });
 
 problemForm.addEventListener('submit', async (event) => {
@@ -305,8 +296,31 @@ problemRows.addEventListener('click', async (event) => {
   const deleteId = Number(target.getAttribute('data-delete'));
   const editId = Number(target.getAttribute('data-edit'));
   const openId = Number(target.getAttribute("data-open"));
-  const id = notesId || deleteId || editId || openId;
+  const visualizeId = Number(target.getAttribute("data-visualize"));
+  const visualizeNotesId = Number(target.getAttribute("data-visualize-notes"));
+  const id = notesId || deleteId || editId || openId || visualizeId || visualizeNotesId;
   if (!id) return;
+
+  if (target.hasAttribute('data-visualize-notes')) {
+    const problem = problems.find((p) => p.id === visualizeNotesId);
+    if (!problem) return;
+    const notes = Object.prototype.hasOwnProperty.call(notesDrafts, visualizeNotesId)
+      ? notesDrafts[visualizeNotesId]
+      : problem.notes || '';
+    document.getElementById('notesViewerTitle').textContent = problem.title ? `Notes: ${problem.title}` : 'Notes';
+    notesViewer.innerHTML = renderMarkdown(notes);
+    notesViewerModal.classList.remove('hidden');
+    return;
+  }
+
+  if (target.hasAttribute('data-visualize')) {
+    const problem = problems.find((p) => p.id === visualizeId);
+    if (!problem) return;
+    document.getElementById('descriptionTitle').textContent = problem.title || 'Problem Description';
+    descriptionViewer.innerHTML = renderMarkdown(problem.description || '');
+    descriptionModal.classList.remove('hidden');
+    return;
+  }
 
   if (target.hasAttribute('data-open')) {
     const problem = problems.find((p) => p.id === openId);
@@ -319,7 +333,7 @@ problemRows.addEventListener('click', async (event) => {
   if (target.hasAttribute('data-delete')) {
     const current = problems.find((p) => p.id === id);
     const problemTitle = current?.title || 'this problem';
-    const confirmed = window.confirm(`Are you sure you want to delete \"${problemTitle}\"? This action cannot be undone.`);
+    const confirmed = window.confirm(`Are you sure you want to delete "${problemTitle}"? This action cannot be undone.`);
     if (!confirmed) return;
 
     await request(`/api/problems/${id}`, { method: 'DELETE' });
@@ -335,8 +349,6 @@ problemRows.addEventListener('click', async (event) => {
     notesInput.value = Object.prototype.hasOwnProperty.call(notesDrafts, id)
       ? notesDrafts[id]
       : current.notes || '';
-    notesPreview.innerHTML = renderMarkdown(notesInput.value);
-    setNotesPreviewExpanded(false);
     notesModal.classList.remove('hidden');
     return;
   }
@@ -355,13 +367,11 @@ problemRows.addEventListener('click', async (event) => {
   problemForm.elements.company_tags.value = (current.company_tags || []).join(', ');
   problemForm.elements.difficulty.value = current.difficulty || 'easy';
   problemForm.elements.description.value = current.description || '';
-  document.getElementById('descriptionPreview').innerHTML = renderMarkdown(current.description);
   openModal();
 });
 
 notesInput.addEventListener('input', () => {
   if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
-  notesPreview.innerHTML = renderMarkdown(notesInput.value);
 });
 
 clearProblemFormBtn.addEventListener('click', () => {
@@ -372,7 +382,6 @@ clearNotesBtn.addEventListener('click', () => {
   if (!currentNotesId) return;
   notesInput.value = '';
   notesDrafts[currentNotesId] = '';
-  notesPreview.innerHTML = '';
 });
 
 for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter, companyTagsFilter]) {
@@ -403,6 +412,7 @@ openAddProblemBtn.addEventListener('click', () => {
   restoreAddProblemDraft();
   openModal();
 });
+
 closeAddProblemBtn.addEventListener('click', () => {
   saveAddProblemDraft();
   currentEditingId = null;
@@ -410,9 +420,11 @@ closeAddProblemBtn.addEventListener('click', () => {
   problemForm.querySelector('button[type="submit"]').textContent = 'Save Problem';
   closeModal();
 });
+
 problemModal.addEventListener('click', (event) => {
   if (event.target === problemModal) {
     saveAddProblemDraft();
+    currentEditingId = null;
     closeModal();
   }
 });
@@ -425,7 +437,6 @@ saveNotesBtn.addEventListener('click', async () => {
   });
   delete notesDrafts[currentNotesId];
   currentNotesId = null;
-  setNotesPreviewExpanded(false);
   notesModal.classList.add('hidden');
   await loadProblems();
   await renderAnalytics();
@@ -434,7 +445,6 @@ saveNotesBtn.addEventListener('click', async () => {
 closeNotesBtn.addEventListener('click', () => {
   if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
   currentNotesId = null;
-  setNotesPreviewExpanded(false);
   notesModal.classList.add('hidden');
 });
 
@@ -442,12 +452,24 @@ notesModal.addEventListener('click', (event) => {
   if (event.target === notesModal) {
     if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
     currentNotesId = null;
-    setNotesPreviewExpanded(false);
     notesModal.classList.add('hidden');
   }
 });
 
-toggleNotesPreviewBtn.addEventListener('click', () => {
-  const expanded = notesModal.classList.contains('preview-expanded');
-  setNotesPreviewExpanded(!expanded);
+
+descriptionModal.addEventListener('click', (event) => {
+  if (event.target === descriptionModal) descriptionModal.classList.add('hidden');
+});
+
+closeDescriptionBtn.addEventListener('click', () => {
+  descriptionModal.classList.add('hidden');
+});
+
+
+notesViewerModal.addEventListener('click', (event) => {
+  if (event.target === notesViewerModal) notesViewerModal.classList.add('hidden');
+});
+
+closeNotesViewerBtn.addEventListener('click', () => {
+  notesViewerModal.classList.add('hidden');
 });

@@ -18,12 +18,9 @@ const notesViewer = document.getElementById('notesViewer');
 const closeNotesViewerBtn = document.getElementById('closeNotesViewer');
 const notesModal = document.getElementById('notesModal');
 const notesInput = document.getElementById('notesInput');
-const notesPreview = document.getElementById('notesPreview');
 const closeNotesBtn = document.getElementById('closeNotes');
 const saveNotesBtn = document.getElementById('saveNotes');
 const clearNotesBtn = document.getElementById('clearNotes');
-const toggleNotesMarkdownBtn = document.getElementById('toggleNotesMarkdown');
-const toggleNotesPreviewBtn = null;
 const tabButtons = [...document.querySelectorAll('.tab-btn')];
 const tabPanels = [...document.querySelectorAll('.tab-panel')];
 
@@ -33,7 +30,6 @@ let currentEditingId = null;
 let currentNotesId = null;
 let addProblemDraft = null;
 let notesDrafts = {};
-let notesMarkdownVisible = false;
 
 function renderMarkdown(text) {
   return marked.parse(text || '');
@@ -54,17 +50,6 @@ function openModal() {
 
 function closeModal() {
   problemModal.classList.add('hidden');
-}
-
-function setNotesMarkdownVisible(visible) {
-  notesMarkdownVisible = visible;
-  notesInput.classList.toggle('hidden', visible);
-  notesPreview.classList.toggle('hidden', !visible);
-  toggleNotesMarkdownBtn.setAttribute('aria-pressed', String(visible));
-  toggleNotesMarkdownBtn.textContent = visible ? 'Edit Markdown' : 'Visualize Markdown';
-  if (visible) {
-    notesPreview.innerHTML = renderMarkdown(notesInput.value);
-  }
 }
 
 function saveAddProblemDraft() {
@@ -131,7 +116,7 @@ function renderProblems() {
         ${openProblemAction}
         <button type="button" data-visualize="${problem.id}">Visualize Markdown</button>
         <button type="button" data-visualize-notes="${problem.id}">Visualize Notes</button>
-        <button data-notes="${problem.id}">Notes</button>
+        <button data-notes="${problem.id}">Edit Notes</button>
         <button data-edit="${problem.id}">Edit</button>
         <button data-delete="${problem.id}">Delete</button>
       </td>
@@ -364,8 +349,6 @@ problemRows.addEventListener('click', async (event) => {
     notesInput.value = Object.prototype.hasOwnProperty.call(notesDrafts, id)
       ? notesDrafts[id]
       : current.notes || '';
-    setNotesMarkdownVisible(false);
-    notesPreview.innerHTML = renderMarkdown(notesInput.value);
     notesModal.classList.remove('hidden');
     return;
   }
@@ -389,9 +372,6 @@ problemRows.addEventListener('click', async (event) => {
 
 notesInput.addEventListener('input', () => {
   if (currentNotesId) notesDrafts[currentNotesId] = notesInput.value;
-  if (notesMarkdownVisible) {
-    notesPreview.innerHTML = renderMarkdown(notesInput.value);
-  }
 });
 
 clearProblemFormBtn.addEventListener('click', () => {
@@ -402,11 +382,6 @@ clearNotesBtn.addEventListener('click', () => {
   if (!currentNotesId) return;
   notesInput.value = '';
   notesDrafts[currentNotesId] = '';
-  notesPreview.innerHTML = '';
-});
-
-toggleNotesMarkdownBtn.addEventListener('click', () => {
-  setNotesMarkdownVisible(!notesMarkdownVisible);
 });
 
 for (const input of [searchInput, difficultyFilter, categoryFilter, tagsFilter, companyTagsFilter]) {
@@ -462,7 +437,6 @@ saveNotesBtn.addEventListener('click', async () => {
   });
   delete notesDrafts[currentNotesId];
   currentNotesId = null;
-  setNotesMarkdownVisible(false);
   notesModal.classList.add('hidden');
   await loadProblems();
   await renderAnalytics();
